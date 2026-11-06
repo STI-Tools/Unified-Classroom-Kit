@@ -897,9 +897,10 @@
                     if (!row) continue;
                     let studentName = null, nameColIdx = -1;
                     for (let c = 0; c < row.length; c++) {
-                        let val = row[c];
+                        const val = row[c];
                         if (val && typeof val === 'string' && val.includes(',') && (val.includes(' ') || val.length > 3)) {
-                            if (!val.toLowerCase().includes('name') && !val.toLowerCase().includes('student')) {
+                            const lowerVal = val.toLowerCase();
+                            if (!lowerVal.includes('name') && !lowerVal.includes('student')) {
                                 studentName = val.trim();
                                 nameColIdx = c;
                                 break;
@@ -908,6 +909,20 @@
                     }
                     if (studentName && nameColIdx !== -1) {
                         if (omitQuery && studentName.toLowerCase().includes(omitQuery)) continue;
+
+                        // Student number is normally stored before the name in the attendance sheet.
+                        // Search backwards for the nearest ID-like value, ignoring blank cells.
+                        let studentNumber = '';
+                        for (let c = nameColIdx - 1; c >= 0; c--) {
+                            const candidate = row[c];
+                            if (candidate === undefined || candidate === null || String(candidate).trim() === '') continue;
+                            const candidateText = String(candidate).trim();
+                            const digitCount = (candidateText.match(/\d/g) || []).length;
+                            if (digitCount >= 5 && /^[\d-]+$/.test(candidateText)) {
+                                studentNumber = candidateText;
+                                break;
+                            }
+                        }
 
                         const attendanceCodes = [];
                         for (let j = nameColIdx + 1; j < row.length; j++) {
@@ -922,7 +937,13 @@
                                 }
                             }
                         }
-                        if (attendanceCodes.length > 0) allRowsOutput.push(attendanceCodes.join('\t'));
+                        if (attendanceCodes.length > 0) {
+                            allRowsOutput.push(
+                                (studentNumber || 'N/A') + '\t' +
+                                studentName + '\t' +
+                                attendanceCodes.join('\t')
+                            );
+                        }
                     }
                 }
             } else {
