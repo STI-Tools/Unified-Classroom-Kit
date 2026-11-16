@@ -1233,6 +1233,68 @@
         reader.readAsArrayBuffer(file);
     }
 
+    function parseDueDateTimestamp(dateStr, originalIdx) {
+        if (!dateStr || typeof dateStr !== 'string') return null;
+        const cleanStr = dateStr.trim();
+        if (!cleanStr) return null;
+
+        const months = {
+            jan: 0, january: 0,
+            feb: 1, february: 1,
+            mar: 2, march: 2,
+            apr: 3, april: 3,
+            may: 4,
+            jun: 5, june: 5,
+            jul: 6, july: 6,
+            aug: 7, august: 7,
+            sep: 8, sept: 8, september: 8,
+            oct: 9, october: 9,
+            nov: 10, november: 10,
+            dec: 11, december: 11
+        };
+
+        // Match formats like "Nov 14", "Aug 11, 2026", "14 Nov", etc.
+        const monthFirstMatch = cleanStr.match(/^([a-zA-Z]+)\.?\s+(\d{1,2})(?:,?\s+(\d{4}))?/);
+        if (monthFirstMatch) {
+            const mKey = monthFirstMatch[1].toLowerCase();
+            if (months.hasOwnProperty(mKey)) {
+                const month = months[mKey];
+                const day = parseInt(monthFirstMatch[2], 10);
+                const year = monthFirstMatch[3] ? parseInt(monthFirstMatch[3], 10) : 2000;
+                return { month, day, year, hasExplicitYear: Boolean(monthFirstMatch[3]), originalIdx };
+            }
+        }
+
+        // Fallback to native Date parsing if full date string is provided (e.g., YYYY-MM-DD or MM/DD/YYYY)
+        const parsedNative = Date.parse(cleanStr);
+        if (!isNaN(parsedNative)) {
+            const d = new Date(parsedNative);
+            return { month: d.getMonth(), day: d.getDate(), year: d.getFullYear(), hasExplicitYear: true, originalIdx };
+        }
+
+        return null;
+    }
+
+    function normalizeSchoolYearTimestamps(headers) {
+        // Detect if term spans across year boundary (e.g., Aug-Dec into Jan-May) when years are omitted
+        const parsedList = headers.map(h => h.parsedDate).filter(Boolean);
+        const hasSecondHalf = parsedList.some(p => p.month >= 6); // Jul - Dec
+        const hasFirstHalf = parsedList.some(p => p.month <= 4);  // Jan - May
+        const spansNewYear = hasSecondHalf && hasFirstHalf;
+
+        headers.forEach(h => {
+            if (!h.parsedDate) {
+                h.sortTime = null;
+                return;
+            }
+            let year = h.parsedDate.year;
+            if (!h.parsedDate.hasExplicitYear && spansNewYear && h.parsedDate.month <= 4) {
+                year += 1;
+            }
+            h.sortTime = new Date(year, h.parsedDate.month, h.parsedDate.day).getTime();
+        });
+    }
+
     function initializeTimeline() {
         if (rawSheetDataSplit.length < 4) return;
         const headerRow = rawSheetDataSplit[0];
@@ -1242,17 +1304,49 @@
         let allHeaders = [];
         for (let c = 7; c < headerRow.length; c++) {
             let maxScoreVal = (maxScoreRow && maxScoreRow[c] !== undefined && maxScoreRow[c] !== null) ? Number(maxScoreRow[c]) : 0;
+            let rawDue = (dueRow && dueRow[c]) ? String(dueRow[c]).trim() : '';
             allHeaders.push({ 
                 type: 'column', 
                 indices: [c], 
                 title: headerRow[c] ? String(headerRow[c]).trim() : `Col ${c}`, 
-                dueDates: [(dueRow && dueRow[c]) ? String(dueRow[c]).trim() : ''],
+                dueDates: [rawDue],
                 maxScores: [isNaN(maxScoreVal) ? 0 : maxScoreVal],
-                omitted: false
+                omitted: false,
+                originalColIdx: c,
+                parsedDate: parseDueDateTimestamp(rawDue, c),
+                sortTime: null
             });
         }
-        let count = parseInt(colCountSelect.value, 10) || allHeaders.length;
-        let selected = allHeaders.slice(-count);
+
+        normalizeSchoolYearTimestamps(allHeaders);
+
+        // Sort chronologically oldest -> newest so .slice(-count) always captures the actual latest grades
+        // regardless of whether the eLMS exported columns in ascending or descending order.
+        const datedHeaders = allHeaders.filter(h => h.sortTime !== null);
+        const undatedHeaders = allHeaders.filter(h => h.sortTime === null);
+
+        // Detect sheet export direction for tie-breaking (same due date) or undated columns:
+        // If first dated column is newer than last dated column, the sheet is descending (newest-first on left).
+        let isSheetDescending = false;
+        if (datedHeaders.length >= 2) {
+            isSheetDescending = datedHeaders[0].sortTime > datedHeaders[datedHeaders.length - 1].sortTime;
+        }
+
+        datedHeaders.sort((a, b) => {
+            if (a.sortTime !== b.sortTime) return a.sortTime - b.sortTime;
+            return isSheetDescending ? (b.originalColIdx - a.originalColIdx) : (a.originalColIdx - b.originalColIdx);
+        });
+
+        if (isSheetDescending) {
+            undatedHeaders.reverse();
+        }
+
+        // Keep undated columns (if any) before dated ones, or at the end if treated as unscheduled/recent?
+        // Placing undated columns first ensures scheduled/dated latest grades are prioritized accurately.
+        const chronologicalHeaders = [...undatedHeaders, ...datedHeaders];
+
+        let count = parseInt(colCountSelect.value, 10) || chronologicalHeaders.length;
+        let selected = chronologicalHeaders.slice(-count);
         let mid = Math.floor(selected.length / 2);
         timelineItems = [...selected.slice(0, mid), { type: 'divider', id: 'split-div' }, ...selected.slice(mid)];
         renderTimeline();
