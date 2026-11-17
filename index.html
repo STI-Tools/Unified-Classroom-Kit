@@ -520,13 +520,16 @@
                     <option value="MIDTERM">Midterm</option>
                     <option value="PRE-FINALS">Pre-Finals</option>
                     <option value="FINALS">Finals</option>
+                    <option value="TERM1">SHS Term 1</option>
+                    <option value="TERM2">SHS Term 2</option>
+                    <option value="TERM3">SHS Term 3</option>
                 </select>
             </div>
             <div class="control-group">
                 <label for="category-select">Select Category / Data Type</label>
                 <select id="category-select">
-                    <option value="lab">Lab Exercises (PTL1-4)</option>
-                    <option value="quizzes">Quizzes (Q1-Q4)</option>
+                    <option value="lab">Lab Exercises / Written-Oral Works (SHS: WW1-20)</option>
+                    <option value="quizzes">Quizzes / Product-Performance Tasks (SHS: PT1-15)</option>
                     <option value="exam">Exam</option>
                     <option value="attendance">Attendance Matrix (Period Sheet)</option>
                 </select>
@@ -762,6 +765,15 @@
                     const workbook = XLSX.read(data, { type: 'array', cellStyles: false, cellNF: false, cellDates: false, sheetStubs: false });
                     let detectedSubject = "Unknown Subject";
                     let detectedSection = "Unknown Section";
+                    let isSHS = workbook.SheetNames.includes('Data Input') &&
+                                workbook.SheetNames.includes('Term 1') &&
+                                workbook.SheetNames.includes('Term 2') &&
+                                workbook.SheetNames.includes('Term 3');
+                    if (isSHS) {
+                        const inputRows = XLSX.utils.sheet_to_json(workbook.Sheets['Data Input'], { header: 1, defval: '' });
+                        detectedSubject = String(inputRows[11] && inputRows[11][6] || 'SHS Subject').trim();
+                        detectedSection = String(inputRows[15] && inputRows[15][6] || 'SHS Section').trim();
+                    }
                     if (workbook.SheetNames.includes('Settings')) {
                         const settingsSheet = workbook.Sheets['Settings'];
                         const settingsJson = XLSX.utils.sheet_to_json(settingsSheet, { header: 1 });
@@ -774,7 +786,7 @@
                     });
                     postMessage({
                         type: 'file_complete',
-                        result: { name: fileObj.name, sheetNames: workbook.SheetNames, sheetsData: sheetsData, classKey: detectedSubject + ' ' + detectedSection },
+                        result: { name: fileObj.name, sheetNames: workbook.SheetNames, sheetsData: sheetsData, classKey: detectedSubject + ' ' + detectedSection, format: isSHS ? 'SHS' : 'COLLEGE' },
                         percent: Math.round(((idx + 1) / total) * 100),
                         current: idx + 1,
                         total: total
@@ -831,9 +843,28 @@
         }
     };
 
-    classSelect.addEventListener('change', renderOutput);
+    classSelect.addEventListener('change', () => {
+        syncPeriodOptions();
+        renderOutput();
+    });
     periodSelect.addEventListener('change', renderOutput);
     categorySelect.addEventListener('change', renderOutput);
+
+    function syncPeriodOptions() {
+        if (!loadedProcessedData.length) return;
+        const selectedClass = classSelect.value;
+        const relevant = selectedClass === 'ALL'
+            ? loadedProcessedData
+            : loadedProcessedData.filter(item => item.classKey === selectedClass);
+        if (!relevant.length) return;
+        const allSHS = relevant.every(isSHSClassFile);
+        const allCollege = relevant.every(item => !isSHSClassFile(item));
+        if (allSHS && !['TERM1', 'TERM2', 'TERM3'].includes(periodSelect.value)) {
+            periodSelect.value = 'TERM1';
+        } else if (allCollege && ['TERM1', 'TERM2', 'TERM3'].includes(periodSelect.value)) {
+            periodSelect.value = 'PRELIMS';
+        }
+    }
 
     function updateClassDropdown() {
         const currentSelection = classSelect.value;
@@ -846,6 +877,7 @@
             classSelect.appendChild(opt);
         });
         if (uniqueClasses.includes(currentSelection) || currentSelection === 'ALL') classSelect.value = currentSelection;
+        syncPeriodOptions();
     }
 
     function exportSessionData() {
@@ -876,6 +908,75 @@
         reader.readAsText(file);
     }
 
+    function isSHSClassFile(item) {
+        return item.format === 'SHS' ||
+            (item.sheetNames || []).includes('Data Input') &&
+            (item.sheetNames || []).includes('Term 1') &&
+            (item.sheetNames || []).includes('Term 2') &&
+            (item.sheetNames || []).includes('Term 3');
+    }
+
+    function renderSHSOutput(item, period, category, omitQuery, outputRows) {
+        const sheets = item.sheetsData || {};
+        const termMap = { TERM1: 'Term 1', TERM2: 'Term 2', TERM3: 'Term 3' };
+        const termName = termMap[period];
+        const termIndex = { TERM1: 'T1', TERM2: 'T2', TERM3: 'T3' }[period];
+
+        if (category === 'attendance') {
+            const rows = sheets['Attendance'] || [];
+            if (!rows.length) return;
+            const attendanceHeader = rows[4] || []; // Row 5 identifies the term for each date.
+            const selectedColumns = [];
+            for (let c = 4; c < attendanceHeader.length; c++) {
+                if (String(attendanceHeader[c] || '').trim().toUpperCase() === termIndex) selectedColumns.push(c);
+            }
+
+            for (let r = 5; r < rows.length; r++) {
+                const row = rows[r] || [];
+                const studentNo = row[2] == null ? '' : String(row[2]).trim();
+                const studentName = row[3] == null ? '' : String(row[3]).trim();
+                if (!studentName || !studentNo || (omitQuery && studentName.toLowerCase().includes(omitQuery))) continue;
+
+                const codes = selectedColumns.map(c => {
+                    const raw = String(row[c] == null ? '' : row[c]).trim().toUpperCase();
+                    if (raw === 'P' || raw === 'PRESENT') return 'P';
+                    if (raw === 'L' || raw === 'LATE') return 'L';
+                    if (raw === 'A' || raw === 'ABSENT') return 'A';
+                    return '';
+                }).filter(Boolean);
+
+                if (codes.length) outputRows.push(studentNo + '\\t' + studentName + '\\t' + codes.join('\\t'));
+            }
+            return;
+        }
+
+        if (!termName || !sheets[termName]) return;
+        const rows = sheets[termName];
+
+        // SHS template layout: WW = E:X, PT = AB:AP, examination = AT:AV.
+        let scoreColumns = [];
+        if (category === 'lab') {
+            scoreColumns = Array.from({ length: 20 }, (_, i) => 4 + i);
+        } else if (category === 'quizzes') {
+            scoreColumns = Array.from({ length: 15 }, (_, i) => 27 + i);
+        } else if (category === 'exam') {
+            scoreColumns = [45, 46, 47]; // ST1, ST2, and TE
+        }
+
+        for (let r = 8; r < rows.length; r++) {
+            const row = rows[r] || [];
+            const studentNo = row[2] == null ? '' : String(row[2]).trim(); // Column C
+            const studentName = row[3] == null ? '' : String(row[3]).trim(); // Column D
+            if (!studentName || !studentNo || (omitQuery && studentName.toLowerCase().includes(omitQuery))) continue;
+            const scores = scoreColumns.map(c => {
+                const value = row[c];
+                return value !== undefined && value !== null && String(value).trim() !== '' &&
+                    !isNaN(value) ? value : '';
+            });
+            outputRows.push(studentNo + '\\t' + studentName + '\\t' + scores.join('\\t'));
+        }
+    }
+
     function renderOutput() {
         if (!loadedProcessedData.length) return;
         const selectedClass = classSelect.value;
@@ -888,6 +989,11 @@
             if (selectedClass !== 'ALL' && item.classKey !== selectedClass) return;
             const sheetsData = item.sheetsData;
             const sheetNames = item.sheetNames;
+
+            if (isSHSClassFile(item)) {
+                renderSHSOutput(item, period, category, omitQuery, allRowsOutput);
+                return;
+            }
 
             if (category === 'attendance') {
                 if (!sheetNames.includes(period)) return;
