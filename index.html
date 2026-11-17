@@ -850,19 +850,54 @@
     periodSelect.addEventListener('change', renderOutput);
     categorySelect.addEventListener('change', renderOutput);
 
+    const gradingPeriodOptions = {
+        college: [
+            { value: 'PRELIMS', label: 'Prelims' },
+            { value: 'MIDTERM', label: 'Midterm' },
+            { value: 'PRE-FINALS', label: 'Pre-Finals' },
+            { value: 'FINALS', label: 'Finals' }
+        ],
+        shs: [
+            { value: 'TERM1', label: 'SHS Term 1' },
+            { value: 'TERM2', label: 'SHS Term 2' },
+            { value: 'TERM3', label: 'SHS Term 3' }
+        ]
+    };
+
     function syncPeriodOptions() {
-        if (!loadedProcessedData.length) return;
         const selectedClass = classSelect.value;
         const relevant = selectedClass === 'ALL'
             ? loadedProcessedData
             : loadedProcessedData.filter(item => item.classKey === selectedClass);
-        if (!relevant.length) return;
-        const allSHS = relevant.every(isSHSClassFile);
-        const allCollege = relevant.every(item => !isSHSClassFile(item));
-        if (allSHS && !['TERM1', 'TERM2', 'TERM3'].includes(periodSelect.value)) {
-            periodSelect.value = 'TERM1';
-        } else if (allCollege && ['TERM1', 'TERM2', 'TERM3'].includes(periodSelect.value)) {
-            periodSelect.value = 'PRELIMS';
+
+        // Before a class record is loaded, keep the standard college periods visible.
+        const hasSHS = relevant.some(isSHSClassFile);
+        const hasCollege = relevant.some(item => !isSHSClassFile(item));
+
+        let allowedOptions;
+        if (hasSHS && hasCollege) {
+            // "All Loaded Classes" can contain both formats, so expose both sets.
+            allowedOptions = [...gradingPeriodOptions.college, ...gradingPeriodOptions.shs];
+        } else if (hasSHS) {
+            allowedOptions = gradingPeriodOptions.shs;
+        } else {
+            allowedOptions = gradingPeriodOptions.college;
+        }
+
+        const currentValue = periodSelect.value;
+        periodSelect.replaceChildren();
+        allowedOptions.forEach(optionData => {
+            const option = document.createElement('option');
+            option.value = optionData.value;
+            option.textContent = optionData.label;
+            periodSelect.appendChild(option);
+        });
+
+        if (allowedOptions.some(option => option.value === currentValue)) {
+            periodSelect.value = currentValue;
+        } else {
+            // Pick a sensible default whenever the selected class type changes.
+            periodSelect.value = hasSHS && !hasCollege ? 'TERM1' : 'PRELIMS';
         }
     }
 
