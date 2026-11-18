@@ -752,52 +752,79 @@
         }
     }
 
-    // --- MODULE 1 WEB WORKER ---
-    const workerBlobUrl = URL.createObjectURL(new Blob([`
-        importScripts('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
-        self.onmessage = async function(e) {
-            const files = e.data;
-            let total = files.length;
-            for (let idx = 0; idx < total; idx++) {
-                const fileObj = files[idx];
-                try {
-                    const data = new Uint8Array(fileObj.buffer);
-                    const workbook = XLSX.read(data, { type: 'array', cellStyles: false, cellNF: false, cellDates: false, sheetStubs: false });
-                    let detectedSubject = "Unknown Subject";
-                    let detectedSection = "Unknown Section";
-                    let isSHS = workbook.SheetNames.includes('Data Input') &&
-                                workbook.SheetNames.includes('Term 1') &&
-                                workbook.SheetNames.includes('Term 2') &&
-                                workbook.SheetNames.includes('Term 3');
-                    if (isSHS) {
-                        const inputRows = XLSX.utils.sheet_to_json(workbook.Sheets['Data Input'], { header: 1, defval: '' });
-                        detectedSubject = String(inputRows[11] && inputRows[11][6] || 'SHS Subject').trim();
-                        detectedSection = String(inputRows[15] && inputRows[15][6] || 'SHS Section').trim();
-                    }
-                    if (workbook.SheetNames.includes('Settings')) {
-                        const settingsSheet = workbook.Sheets['Settings'];
-                        const settingsJson = XLSX.utils.sheet_to_json(settingsSheet, { header: 1 });
-                        if (settingsJson[7] && settingsJson[7][4]) detectedSubject = String(settingsJson[7][4]).trim();
-                        if (settingsJson[4] && settingsJson[4][15]) detectedSection = String(settingsJson[4][15]).trim();
-                    }
-                    let sheetsData = {};
-                    workbook.SheetNames.forEach(sheetName => {
-                        sheetsData[sheetName] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, blankrows: false });
-                    });
-                    postMessage({
-                        type: 'file_complete',
-                        result: { name: fileObj.name, sheetNames: workbook.SheetNames, sheetsData: sheetsData, classKey: detectedSubject + ' ' + detectedSection, format: isSHS ? 'SHS' : 'COLLEGE' },
-                        percent: Math.round(((idx + 1) / total) * 100),
-                        current: idx + 1,
-                        total: total
-                    });
-                } catch (err) { console.error("Worker error:", err); }
+    // --- MODULE 1 PARSER (runs in a Web Worker when allowed, otherwise on the main thread) ---
+    function parseClassWorkbook(fileObj) {
+        const data = new Uint8Array(fileObj.buffer);
+        const workbook = XLSX.read(data, { type: 'array', cellStyles: false, cellNF: false, cellDates: false, sheetStubs: false });
+        let detectedSubject = "Unknown Subject";
+        let detectedSection = "Unknown Section";
+        const isSHS = workbook.SheetNames.includes('Data Input') &&
+                      workbook.SheetNames.includes('Term 1') &&
+                      workbook.SheetNames.includes('Term 2') &&
+                      workbook.SheetNames.includes('Term 3');
+        if (isSHS) {
+            const inputRows = XLSX.utils.sheet_to_json(workbook.Sheets['Data Input'], { header: 1, defval: '', range: { s: { r: 0, c: 0 }, e: { r: 60, c: 30 } } });
+            detectedSubject = String(inputRows[11] && inputRows[11][6] || 'SHS Subject').trim();
+            detectedSection = String(inputRows[15] && inputRows[15][6] || 'SHS Section').trim();
+        }
+        if (workbook.SheetNames.includes('Settings')) {
+            const settingsJson = XLSX.utils.sheet_to_json(workbook.Sheets['Settings'], { header: 1 });
+            if (settingsJson[7] && settingsJson[7][4]) detectedSubject = String(settingsJson[7][4]).trim();
+            if (settingsJson[4] && settingsJson[4][15]) detectedSection = String(settingsJson[4][15]).trim();
+        }
+        const sheetsData = {};
+        workbook.SheetNames.forEach(sheetName => {
+            const ws = workbook.Sheets[sheetName];
+            if (isSHS && ws['!ref']) {
+                // SHS logic uses fixed positions (column C = student no., row 9 = first student), so read from A1
+                // and keep blank rows; otherwise sheets whose used range starts at B1 shift every column/row.
+                const rng = XLSX.utils.decode_range(ws['!ref']);
+                rng.s.r = 0; rng.s.c = 0;
+                sheetsData[sheetName] = XLSX.utils.sheet_to_json(ws, { header: 1, range: rng, blankrows: true, defval: '' });
+            } else {
+                sheetsData[sheetName] = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
             }
-            postMessage({ type: 'batch_complete' });
-        };
-    `], { type: 'application/javascript' }));
+        });
+        return { name: fileObj.name, sheetNames: workbook.SheetNames, sheetsData: sheetsData,
+                 classKey: detectedSubject + ' ' + detectedSection, format: isSHS ? 'SHS' : 'COLLEGE' };
+    }
 
-    const worker = new Worker(workerBlobUrl);
+    // Parser wrapper: tries a Web Worker first; if the sandbox blocks it (e.g. SecurityError on blob workers), parses on the main thread.
+    const parser = (function () {
+        let realWorker = null;
+        const api = { onmessage: null };
+        function emit(msg) { if (api.onmessage) api.onmessage({ data: msg }); }
+
+        try {
+            const src = 'importScripts("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");\n' +
+                parseClassWorkbook.toString() + '\n' +
+                'self.onmessage = function(e){ const files = e.data, total = files.length;\n' +
+                '  for (let i = 0; i < total; i++) { try { postMessage({ type: "file_complete", result: parseClassWorkbook(files[i]), percent: Math.round(((i+1)/total)*100), current: i+1, total: total }); } catch (err) { console.error("Worker error:", err); } }\n' +
+                '  postMessage({ type: "batch_complete" }); };';
+            realWorker = new Worker(URL.createObjectURL(new Blob([src], { type: 'application/javascript' })));
+            realWorker.onmessage = function (e) { emit(e.data); };
+            realWorker.onerror = function () { realWorker = null; };
+        } catch (err) {
+            console.warn('Web Worker unavailable, parsing on main thread:', err);
+            realWorker = null;
+        }
+
+        api.postMessage = function (files) {
+            if (realWorker) { realWorker.postMessage(files); return; }
+            const total = files.length;
+            let i = 0;
+            (function next() {
+                if (i >= total) { emit({ type: 'batch_complete' }); return; }
+                try {
+                    const result = parseClassWorkbook(files[i]);
+                    i++;
+                    emit({ type: 'file_complete', result: result, percent: Math.round((i / total) * 100), current: i, total: total });
+                } catch (err) { console.error('Parse error:', err); i++; }
+                setTimeout(next, 0); // yield so the progress bar can repaint
+            })();
+        };
+        return api;
+    })();
 
     let loadedProcessedData = [];
     const fileInputGrades = document.getElementById('file-input-grades');
@@ -823,10 +850,10 @@
             const buffer = await files[i].arrayBuffer();
             filePayloads.push({ name: files[i].name, buffer: buffer });
         }
-        worker.postMessage(filePayloads);
+        parser.postMessage(filePayloads);
     });
 
-    worker.onmessage = function(e) {
+    parser.onmessage = function(e) {
         const msg = e.data;
         if (msg.type === 'file_complete') {
             loadedProcessedData.push(msg.result);
@@ -980,7 +1007,7 @@
                     return '';
                 }).filter(Boolean);
 
-                if (codes.length) outputRows.push(studentNo + '\\t' + studentName + '\\t' + codes.join('\\t'));
+                if (codes.length) outputRows.push(studentNo + '\t' + studentName + '\t' + codes.join('\t'));
             }
             return;
         }
@@ -1008,7 +1035,7 @@
                 return value !== undefined && value !== null && String(value).trim() !== '' &&
                     !isNaN(value) ? value : '';
             });
-            outputRows.push(studentNo + '\\t' + studentName + '\\t' + scores.join('\\t'));
+            outputRows.push(studentNo + '\t' + studentName + '\t' + scores.join('\t'));
         }
     }
 
