@@ -755,37 +755,66 @@
     // --- MODULE 1 PARSER (runs in a Web Worker when allowed, otherwise on the main thread) ---
     function parseClassWorkbook(fileObj) {
         const data = new Uint8Array(fileObj.buffer);
-        const workbook = XLSX.read(data, { type: 'array', cellStyles: false, cellNF: false, cellDates: false, sheetStubs: false });
+
+        // Step 1: read only the sheet names (very cheap) to learn the format and which sheets are actually needed.
+        const allNames = XLSX.read(data, { type: 'array', bookSheets: true }).SheetNames;
+        const isSHS = allNames.includes('Data Input') && allNames.includes('Term 1') &&
+                      allNames.includes('Term 2') && allNames.includes('Term 3');
+        const wanted = isSHS
+            ? ['Data Input', 'Term 1', 'Term 2', 'Term 3', 'Attendance']
+            : ['Input', 'PRELIMS', 'MIDTERM', 'PRE-FINALS', 'FINALS'];
+        wanted.push('Settings');
+        const toParse = allNames.filter(n => wanted.includes(n));
+
+        // Step 2: fully parse just those sheets and skip the rest (summaries, validation, helpers, etc.).
+        const workbook = XLSX.read(data, { type: 'array', sheets: toParse, cellStyles: false, cellNF: false, cellDates: false, sheetStubs: false });
+
+        // Excel's declared range ("!ref") can be huge (e.g. A1:BP1048542) even if only a few hundred rows hold data.
+        // Find the last row/column that really contains a value and only convert up to there.
+        function usedRange(ws, startAtOrigin) {
+            const declared = XLSX.utils.decode_range(ws['!ref']);
+            let maxR = -1, maxC = -1;
+            for (const addr in ws) {
+                if (addr.charCodeAt(0) === 33) continue; // skips "!ref", "!merges", etc.
+                const cell = ws[addr];
+                if (!cell || cell.v === undefined || cell.v === null || cell.v === '') continue;
+                const pos = XLSX.utils.decode_cell(addr);
+                if (pos.r > maxR) maxR = pos.r;
+                if (pos.c > maxC) maxC = pos.c;
+            }
+            if (maxR < 0) return null; // sheet has no values at all
+            const rng = { s: { r: declared.s.r, c: declared.s.c }, e: { r: Math.min(declared.e.r, maxR), c: Math.min(declared.e.c, maxC) } };
+            if (startAtOrigin) { rng.s.r = 0; rng.s.c = 0; }
+            return rng;
+        }
+
         let detectedSubject = "Unknown Subject";
         let detectedSection = "Unknown Section";
-        const isSHS = workbook.SheetNames.includes('Data Input') &&
-                      workbook.SheetNames.includes('Term 1') &&
-                      workbook.SheetNames.includes('Term 2') &&
-                      workbook.SheetNames.includes('Term 3');
         if (isSHS) {
             const inputRows = XLSX.utils.sheet_to_json(workbook.Sheets['Data Input'], { header: 1, defval: '', range: { s: { r: 0, c: 0 }, e: { r: 60, c: 30 } } });
             detectedSubject = String(inputRows[11] && inputRows[11][6] || 'SHS Subject').trim();
             detectedSection = String(inputRows[15] && inputRows[15][6] || 'SHS Section').trim();
         }
-        if (workbook.SheetNames.includes('Settings')) {
+        if (workbook.Sheets['Settings']) {
             const settingsJson = XLSX.utils.sheet_to_json(workbook.Sheets['Settings'], { header: 1 });
             if (settingsJson[7] && settingsJson[7][4]) detectedSubject = String(settingsJson[7][4]).trim();
             if (settingsJson[4] && settingsJson[4][15]) detectedSection = String(settingsJson[4][15]).trim();
         }
+
         const sheetsData = {};
-        workbook.SheetNames.forEach(sheetName => {
+        toParse.forEach(sheetName => {
+            if (sheetName === 'Settings' || sheetName === 'Data Input') return; // only needed for class detection above
             const ws = workbook.Sheets[sheetName];
-            if (isSHS && ws['!ref']) {
+            if (!ws || !ws['!ref']) { sheetsData[sheetName] = []; return; }
+            const rng = usedRange(ws, isSHS);
+            if (!rng) { sheetsData[sheetName] = []; return; }
+            sheetsData[sheetName] = isSHS
                 // SHS logic uses fixed positions (column C = student no., row 9 = first student), so read from A1
                 // and keep blank rows; otherwise sheets whose used range starts at B1 shift every column/row.
-                const rng = XLSX.utils.decode_range(ws['!ref']);
-                rng.s.r = 0; rng.s.c = 0;
-                sheetsData[sheetName] = XLSX.utils.sheet_to_json(ws, { header: 1, range: rng, blankrows: true, defval: '' });
-            } else {
-                sheetsData[sheetName] = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false });
-            }
+                ? XLSX.utils.sheet_to_json(ws, { header: 1, range: rng, blankrows: true, defval: '' })
+                : XLSX.utils.sheet_to_json(ws, { header: 1, range: rng, blankrows: false });
         });
-        return { name: fileObj.name, sheetNames: workbook.SheetNames, sheetsData: sheetsData,
+        return { name: fileObj.name, sheetNames: allNames, sheetsData: sheetsData,
                  classKey: detectedSubject + ' ' + detectedSection, format: isSHS ? 'SHS' : 'COLLEGE' };
     }
 
