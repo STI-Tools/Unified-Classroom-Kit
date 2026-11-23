@@ -492,6 +492,23 @@
             box-sizing: border-box;
             line-height: 1.4rem;
         }
+        /* Splitter: loaded-file switcher */
+        .split-file-tabs { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; }
+        .split-file-tabs:empty { display: none; }
+        .split-file-tab {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.35rem 0.5rem 0.35rem 0.75rem;
+            border: 1px solid var(--border); border-radius: 999px;
+            background: #fff; color: #475569; font-size: 0.8rem; cursor: pointer;
+            max-width: 100%;
+        }
+        .split-file-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .split-file-tab .tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+        .split-file-tab .tab-x {
+            border: none; background: transparent; color: inherit; cursor: pointer;
+            font-size: 0.95rem; line-height: 1; padding: 0 0.25rem; opacity: 0.7;
+        }
+        .split-file-tab .tab-x:hover { opacity: 1; }
     </style>
 </head>
 <body>
@@ -666,10 +683,11 @@
     <!-- MODULE 3: LMS DRAG & DROP SPLITTER -->
     <div id="panel-splitter" class="tool-panel" style="text-align: left;">
         <div class="drop-zone" id="drop-zone-split">
-            <p id="drop-text-split">Drag & drop your LMS Excel file here, or <span style="color: var(--primary); text-decoration: underline;">browse</span></p>
-            <input type="file" id="file-input-split" class="file-input-cover" accept=".xlsx, .xls">
+            <p id="drop-text-split">Drag & drop your LMS Excel file(s) here (one or several gradebooks), or <span style="color: var(--primary); text-decoration: underline;">browse</span></p>
+            <input type="file" id="file-input-split" class="file-input-cover" accept=".xlsx, .xls" multiple>
         </div>
         <div id="file-info-split" class="file-info">Ready for LMS file upload.</div>
+        <div id="split-file-tabs" class="split-file-tabs"></div>
 
         <div class="controls">
             <div class="control-group">
@@ -1534,29 +1552,168 @@
     // --- MODULE 3: LMS SPLITTER SCRIPT ---
     let rawSheetDataSplit = [];
     let timelineItems = []; 
+    let splitLayout = null;      // where things live in the ACTIVE gradebook (see detectSplitLayout)
+    let splitFiles = [];         // every loaded gradebook: { name, rows, layout, timelineItems, studentCount, colCount }
+    let activeSplitFile = -1;
     const fileInputSplit = document.getElementById('file-input-split');
     const omitInputSplit = document.getElementById('omit-input-split');
     const colCountSelect = document.getElementById('col-count-select');
     const fileInfoSplit = document.getElementById('file-info-split');
     const rosterChecklist = document.getElementById('roster-checklist');
+    const splitFileTabs = document.getElementById('split-file-tabs');
 
     fileInputSplit.addEventListener('change', (e) => {
-        if (e.target.files.length) handleSplitFile(e.target.files[0]);
+        if (e.target.files.length) handleSplitFiles(Array.from(e.target.files));
+        e.target.value = ''; // allow re-selecting the same file(s) later
     });
 
-    function handleSplitFile(file) {
-        fileInfoSplit.textContent = `Loading file: ${file.name}...`;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                rawSheetDataSplit = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, blankrows: false });
-                initializeTimeline();
-                fileInfoSplit.textContent = `Successfully loaded: ${file.name} (${rawSheetDataSplit.length - 4} students found).`;
-            } catch (err) { fileInfoSplit.textContent = `Error: ${err.message}`; }
+    function escHtml(v) {
+        return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Works out the shape of an LMS gradebook export. Two shapes are known:
+    //   A) Assignments / Category / Due / Students(M,I,AB,X,Overall,grade,<max scores>) / students...
+    //   B) Assignments / Students(Overall,grade,<max scores>) / students...   (no Category/Due rows)
+    // Instead of hard-coded row/column numbers it finds the rows by their labels in column A.
+    function detectSplitLayout(rows) {
+        const label = r => (rows[r] && rows[r][0] != null) ? String(rows[r][0]).trim().toLowerCase() : '';
+        const scanTo = Math.min(rows.length, 15);
+        let headerRow = -1, dueRow = -1, maxRow = -1;
+        for (let r = 0; r < scanTo; r++) {
+            const l = label(r);
+            if (headerRow < 0 && l === 'assignments') headerRow = r;
+            else if (dueRow < 0 && l === 'due') dueRow = r;
+            else if (maxRow < 0 && l === 'students') maxRow = r;
+        }
+        const isStudentRow = r => {
+            const n = rows[r] && rows[r][0];
+            return typeof n === 'string' && n.includes(',');
         };
-        reader.readAsArrayBuffer(file);
+        let firstStudentRow = -1;
+        for (let r = Math.max(maxRow, 0) + 1; r < rows.length; r++) {
+            if (isStudentRow(r)) { firstStudentRow = r; break; }
+        }
+        if (firstStudentRow < 0) throw new Error('No student rows found (expected names like "Last, First").');
+        if (maxRow < 0) maxRow = firstStudentRow - 1;      // fall back to the row just above the first student
+        if (headerRow < 0) headerRow = 0;
+
+        // First assignment column: the grade column sits right after "Overall", assignments follow it.
+        const maxCells = rows[maxRow] || [];
+        const headerCells = rows[headerRow] || [];
+        let firstCol = -1;
+        for (let c = 1; c < maxCells.length; c++) {
+            if (maxCells[c] != null && String(maxCells[c]).trim().toLowerCase() === 'overall') { firstCol = c + 2; break; }
+        }
+        if (firstCol < 0) { // no "Overall" label: first column with a header AND a numeric max score
+            for (let c = 1; c < Math.max(maxCells.length, headerCells.length); c++) {
+                const hasHeader = headerCells[c] != null && String(headerCells[c]).trim() !== '';
+                const mv = maxCells[c];
+                if (hasHeader && mv != null && String(mv).trim() !== '' && !isNaN(Number(mv))) { firstCol = c; break; }
+            }
+        }
+        if (firstCol < 0) throw new Error('Could not find the assignment columns in this file.');
+
+        return { headerRow, dueRow, maxRow, firstStudentRow, firstCol, hasDueDates: dueRow >= 0 };
+    }
+
+    function countStudents(rows, layout) {
+        let n = 0;
+        for (let r = layout.firstStudentRow; r < rows.length; r++) {
+            const nm = rows[r] && rows[r][0];
+            if (typeof nm === 'string' && nm.includes(',')) n++;
+        }
+        return n;
+    }
+
+    function readSplitFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error(`${file.name}: could not be read`));
+            reader.onload = (e) => {
+                try {
+                    const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, blankrows: false });
+                    const layout = detectSplitLayout(rows);
+                    resolve({
+                        name: file.name, rows, layout, timelineItems: null,
+                        studentCount: countStudents(rows, layout),
+                        colCount: Math.max((rows[layout.headerRow] || []).length - layout.firstCol, 0)
+                    });
+                } catch (err) { reject(new Error(`${file.name}: ${err.message}`)); }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    async function handleSplitFiles(files) {
+        fileInfoSplit.textContent = `Loading ${files.length} file${files.length > 1 ? 's' : ''}...`;
+        saveActiveSplitFile();
+        const errors = [];
+        let firstNew = -1;
+        for (const file of files) {
+            try {
+                const entry = await readSplitFile(file);
+                const existing = splitFiles.findIndex(f => f.name === entry.name);
+                if (existing >= 0) { splitFiles[existing] = entry; if (firstNew < 0) firstNew = existing; }
+                else { splitFiles.push(entry); if (firstNew < 0) firstNew = splitFiles.length - 1; }
+            } catch (err) { errors.push(err.message); }
+        }
+        if (firstNew >= 0) activateSplitFile(firstNew, true);
+        else renderSplitFileTabs();
+        if (errors.length) fileInfoSplit.textContent = 'Error: ' + errors.join(' | ') + (firstNew >= 0 ? '  ·  ' + fileInfoSplit.textContent : '');
+    }
+
+    function saveActiveSplitFile() {
+        if (activeSplitFile >= 0 && splitFiles[activeSplitFile]) splitFiles[activeSplitFile].timelineItems = timelineItems;
+    }
+
+    function activateSplitFile(idx, forceRebuild) {
+        if (idx !== activeSplitFile) saveActiveSplitFile();
+        activeSplitFile = idx;
+        const f = splitFiles[idx];
+        rawSheetDataSplit = f.rows;
+        splitLayout = f.layout;
+        if (f.timelineItems && !forceRebuild) {
+            timelineItems = f.timelineItems;
+            renderTimeline();
+            processAndRenderSplitter();
+        } else {
+            initializeTimeline();
+        }
+        const dateNote = f.layout.hasDueDates ? 'due dates found' : 'no due dates in this file, assuming newest-first column order';
+        fileInfoSplit.textContent = `Active: ${f.name} (${f.studentCount} students, ${f.colCount} columns, ${dateNote}).` +
+            (splitFiles.length > 1 ? ` ${splitFiles.length} files loaded, switch with the tabs below.` : '');
+        renderSplitFileTabs();
+    }
+
+    function removeSplitFile(idx) {
+        splitFiles.splice(idx, 1);
+        if (!splitFiles.length) {
+            activeSplitFile = -1; rawSheetDataSplit = []; splitLayout = null; timelineItems = [];
+            document.getElementById('timeline-track').innerHTML = '<p style="color:#94a3b8; width:100%; text-align:center;">Please upload an LMS Excel file above...</p>';
+            rosterChecklist.innerHTML = '<i style="color:#94a3b8;">No records loaded.</i>';
+            document.getElementById('output-a').value = '';
+            document.getElementById('output-b').value = '';
+            fileInfoSplit.textContent = 'Ready for LMS file upload.';
+            renderSplitFileTabs();
+            return;
+        }
+        if (idx === activeSplitFile) { activeSplitFile = -1; activateSplitFile(Math.min(idx, splitFiles.length - 1)); }
+        else { if (idx < activeSplitFile) activeSplitFile--; renderSplitFileTabs(); }
+    }
+
+    function renderSplitFileTabs() {
+        splitFileTabs.innerHTML = '';
+        if (!splitFiles.length) return;
+        splitFiles.forEach((f, i) => {
+            const tab = document.createElement('div');
+            tab.className = 'split-file-tab' + (i === activeSplitFile ? ' active' : '');
+            tab.title = f.name;
+            tab.innerHTML = `<span class="tab-name">${escHtml(f.name)}</span><button class="tab-x" title="Remove this file" aria-label="Remove ${escHtml(f.name)}">✕</button>`;
+            tab.onclick = () => { if (i !== activeSplitFile) activateSplitFile(i); };
+            tab.querySelector('.tab-x').onclick = (ev) => { ev.stopPropagation(); removeSplitFile(i); };
+            splitFileTabs.appendChild(tab);
+        });
     }
 
     function parseDueDateTimestamp(dateStr, originalIdx) {
@@ -1622,13 +1779,13 @@
     }
 
     function initializeTimeline() {
-        if (rawSheetDataSplit.length < 4) return;
-        const headerRow = rawSheetDataSplit[0];
-        const dueRow = rawSheetDataSplit[2];
-        const maxScoreRow = rawSheetDataSplit[3];
+        if (!splitLayout) return;
+        const headerRow = rawSheetDataSplit[splitLayout.headerRow] || [];
+        const dueRow = splitLayout.dueRow >= 0 ? rawSheetDataSplit[splitLayout.dueRow] : null;
+        const maxScoreRow = rawSheetDataSplit[splitLayout.maxRow];
         
         let allHeaders = [];
-        for (let c = 7; c < headerRow.length; c++) {
+        for (let c = splitLayout.firstCol; c < headerRow.length; c++) {
             let maxScoreVal = (maxScoreRow && maxScoreRow[c] !== undefined && maxScoreRow[c] !== null) ? Number(maxScoreRow[c]) : 0;
             let rawDue = (dueRow && dueRow[c]) ? String(dueRow[c]).trim() : '';
             allHeaders.push({ 
@@ -1653,9 +1810,11 @@
 
         // Detect sheet export direction for tie-breaking (same due date) or undated columns:
         // If first dated column is newer than last dated column, the sheet is descending (newest-first on left).
-        let isSheetDescending = false;
+        // LMS exports list the newest column on the left, so with too few dates to tell
+        // (e.g. a gradebook with no Due row at all) assume newest-first.
+        let isSheetDescending = true;
         if (datedHeaders.length >= 2) {
-            isSheetDescending = datedHeaders[0].sortTime > datedHeaders[datedHeaders.length - 1].sortTime;
+            isSheetDescending = datedHeaders[0].sortTime >= datedHeaders[datedHeaders.length - 1].sortTime;
         }
 
         datedHeaders.sort((a, b) => {
@@ -1710,7 +1869,7 @@
 
                 card.innerHTML = `
                     <div>
-                        <div class="card-title" title="${item.title}">${colCounter}. ${item.title}</div>
+                        <div class="card-title" title="${escHtml(item.title)}">${colCounter}. ${escHtml(item.title)}</div>
                         <div class="card-date">📅 ${displayDate}</div>
                         <div class="card-max">🎯 Max: ${totalMaxScore}</div>
                     </div>
@@ -1751,9 +1910,9 @@
     window.uncombineColumn = function(idx) {
         let curr = timelineItems[idx];
         if (curr && curr.indices.length > 1) {
-            let originalHeaderRow = rawSheetDataSplit[0];
-            let originalDueRow = rawSheetDataSplit[2];
-            let originalMaxScoreRow = rawSheetDataSplit[3];
+            let originalHeaderRow = rawSheetDataSplit[splitLayout.headerRow] || [];
+            let originalDueRow = splitLayout.dueRow >= 0 ? rawSheetDataSplit[splitLayout.dueRow] : null;
+            let originalMaxScoreRow = rawSheetDataSplit[splitLayout.maxRow];
             
             let restoredItems = curr.indices.map(origColIdx => {
                 let mVal = (originalMaxScoreRow && originalMaxScoreRow[origColIdx] !== undefined) ? Number(originalMaxScoreRow[origColIdx]) : 0;
@@ -1809,7 +1968,7 @@
     }
 
     function processAndRenderSplitter() {
-        if (rawSheetDataSplit.length < 5) return;
+        if (!splitLayout) return;
         const omitQuery = omitInputSplit.value.trim().toLowerCase();
         let groupACols = [], groupBCols = [], foundDivider = false;
 
@@ -1823,7 +1982,7 @@
         });
 
         let studentRecords = [];
-        for (let r = 4; r < rawSheetDataSplit.length; r++) {
+        for (let r = splitLayout.firstStudentRow; r < rawSheetDataSplit.length; r++) {
             const row = rawSheetDataSplit[r];
             if (!row) continue;
             const studentName = row[0];
