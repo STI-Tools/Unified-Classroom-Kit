@@ -316,6 +316,22 @@
             font-weight: 500;
         }
 
+
+        /* Finals Needed Calculator */
+        .output-grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 900px) {
+            .output-grid-2col { grid-template-columns: 1fr; }
+        }
+        .calc-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin: 0;
+        }
+
         /* Module 2 Specific Styles */
         .output-grid-3col {
             display: grid;
@@ -562,12 +578,32 @@
             <div id="progress-bar" class="progress-bar">0%</div>
         </div>
 
-        <div class="output-section">
-            <div class="output-header">
-                <label for="output-data-grades">Raw Copy-Pasteable Data</label>
-                <button class="btn-action" id="copy-btn-grades" onclick="copyText('output-data-grades', this)">Copy to Clipboard</button>
+        <div class="output-grid-2col">
+            <div class="output-section">
+                <div class="output-header">
+                    <label for="output-data-grades">Raw Copy-Pasteable Data</label>
+                    <button class="btn-action" id="copy-btn-grades" onclick="copyText('output-data-grades', this)">Copy to Clipboard</button>
+                </div>
+                <textarea id="output-data-grades" readonly placeholder="Upload Excel files or import a session above to generate raw data..."></textarea>
             </div>
-            <textarea id="output-data-grades" readonly placeholder="Upload Excel files or import a session above to generate raw data..."></textarea>
+
+            <div class="output-section">
+                <div class="output-header">
+                    <label for="finals-output">Needed Finals Grade (from Summary tab)</label>
+                    <span style="display:flex; gap:0.5rem;">
+                        <button class="btn-action" onclick="reshuffleFinals()">🔀 Shuffle</button>
+                        <button class="btn-action" id="copy-btn-finals" onclick="copyText('finals-output', this)">Copy to Clipboard</button>
+                    </span>
+                </div>
+                <select id="finals-spacing" onchange="renderOutput()" style="padding: 0.4rem; font-size: 0.85rem;">
+                    <option value="tab2" selected>Spacing: 2 tabs (wider)</option>
+                    <option value="tab1">Spacing: 1 tab (Excel columns)</option>
+                    <option value="tab3">Spacing: 3 tabs (widest)</option>
+                    <option value="spaces">Spacing: aligned with spaces</option>
+                </select>
+                <textarea id="finals-output" readonly placeholder="StudentNumber&#9;NeededFinalsGrade (auto-filled from the Summary tab once you upload Excel files)..."></textarea>
+                <p class="calc-hint">((Prelim + Midterm + Prefinal) × 0.2) + (Finals × 0.4) = 60</p>
+            </div>
         </div>
     </div>
 
@@ -764,6 +800,7 @@
             ? ['Data Input', 'Term 1', 'Term 2', 'Term 3', 'Attendance']
             : ['Input', 'PRELIMS', 'MIDTERM', 'PRE-FINALS', 'FINALS'];
         wanted.push('Settings');
+        if (!isSHS) allNames.forEach(n => { if (/summary/i.test(n) && !wanted.includes(n)) wanted.push(n); });
         const toParse = allNames.filter(n => wanted.includes(n));
 
         // Step 2: fully parse just those sheets and skip the rest (summaries, validation, helpers, etc.).
@@ -1068,6 +1105,97 @@
         }
     }
 
+
+    // --- NEEDED FINALS GRADE (reads the Summary tab) ---
+    function findSummarySheetName(item) {
+        return (item.sheetNames || []).find(n => /summary/i.test(n) && item.sheetsData && item.sheetsData[n]);
+    }
+
+    // Random order is kept stable (so changing spacing doesn't reshuffle); press the Shuffle button for a new order.
+    let finalsShuffleKeys = {};
+    window.reshuffleFinals = function () {
+        finalsShuffleKeys = {};
+        renderOutput();
+    };
+
+    function finalsSeparate(studentNo, grade) {
+        const mode = (document.getElementById('finals-spacing') || {}).value || 'tab2';
+        if (mode === 'spaces') return studentNo.padEnd(16, ' ') + grade;
+        const tabs = mode === 'tab1' ? 1 : mode === 'tab3' ? 3 : 2;
+        return studentNo + '\t'.repeat(tabs) + grade;
+    }
+
+    function extractFinalsNeeded(item, omitQuery, out) {
+        const sheetName = findSummarySheetName(item);
+        if (!sheetName) return false;
+        const rows = item.sheetsData[sheetName] || [];
+        const isNum = v => v !== undefined && v !== null && String(v).trim() !== '' && !isNaN(Number(v));
+        const txt = v => (v === undefined || v === null) ? '' : String(v).trim();
+
+        // Header rows = everything above the first row that looks like a student (has a name with a comma).
+        let dataStart = rows.findIndex(r => r && r.some(c => typeof c === 'string' && c.includes(',') && !/name|student/i.test(c)));
+        if (dataStart < 0) dataStart = Math.min(rows.length, 12);
+        const width = Math.max(0, ...rows.map(r => r ? r.length : 0));
+        const headers = [];
+        for (let c = 0; c < width; c++) {
+            let h = '';
+            for (let r = 0; r < dataStart; r++) h += ' ' + txt(rows[r] && rows[r][c]);
+            headers.push(h.trim());
+        }
+
+        function pickCol(regex) {
+            const matches = [];
+            headers.forEach((h, c) => { if (regex.test(h)) matches.push(c); });
+            if (!matches.length) return -1;
+            const gradeCols = matches.filter(c => /grade|rating|equiv|total/i.test(headers[c]));
+            return (gradeCols.length ? gradeCols : matches).slice(-1)[0];
+        }
+        const prelimCol = pickCol(/prelim/i);
+        const midCol = pickCol(/mid/i);
+        const preFinalCol = pickCol(/pre[\s\-_.]*fin/i);
+        let idCol = headers.findIndex(h => /student\s*(no|num|number|id|#)|^\s*(id|no\.?)\s*$/i.test(h));
+        if (prelimCol < 0 || midCol < 0 || preFinalCol < 0) return null;
+
+        for (let r = dataStart; r < rows.length; r++) {
+            const row = rows[r];
+            if (!row) continue;
+            let studentNo = idCol >= 0 ? txt(row[idCol]) : '';
+            if (!studentNo) {
+                for (let c = 0; c < width; c++) {
+                    const t = txt(row[c]);
+                    if (/^[\d-]+$/.test(t) && (t.match(/\d/g) || []).length >= 5) { studentNo = t; break; }
+                }
+            }
+            if (!studentNo) continue;
+            if (omitQuery && row.some(c => typeof c === 'string' && c.toLowerCase().includes(omitQuery))) continue;
+            if (!isNum(row[prelimCol]) || !isNum(row[midCol]) || !isNum(row[preFinalCol])) continue;
+            const sum = Number(row[prelimCol]) + Number(row[midCol]) + Number(row[preFinalCol]);
+            const needed = Math.max(0, (60 - sum * 0.2) / 0.4);
+            out.push({ no: studentNo, grade: needed.toFixed(2) });
+        }
+        return true;
+    }
+
+    function renderFinalsNeeded(selectedClass, omitQuery) {
+        const box = document.getElementById('finals-output');
+        if (!box) return;
+        const out = [];
+        const problems = [];
+        loadedProcessedData.forEach(item => {
+            if (selectedClass !== 'ALL' && item.classKey !== selectedClass) return;
+            if (isSHSClassFile(item)) return;
+            const res = extractFinalsNeeded(item, omitQuery, out);
+            if (res === false) problems.push(item.name + ': no Summary tab found');
+            else if (res === null) problems.push(item.name + ': could not find Prelim / Midterm / Pre-Finals columns in the Summary tab');
+        });
+        if (out.length) {
+            out.forEach(o => { if (!(o.no in finalsShuffleKeys)) finalsShuffleKeys[o.no] = Math.random(); });
+            out.sort((a, b) => finalsShuffleKeys[a.no] - finalsShuffleKeys[b.no]);
+            box.value = out.map(o => finalsSeparate(o.no, o.grade)).join('\n');
+        }
+        else box.value = problems.length ? problems.join('\n') : 'No Summary tab records found.';
+    }
+
     function renderOutput() {
         if (!loadedProcessedData.length) return;
         const selectedClass = classSelect.value;
@@ -1163,6 +1291,7 @@
             }
         });
         outputGrades.value = allRowsOutput.length ? allRowsOutput.join('\n') : "No student records found.";
+        renderFinalsNeeded(selectedClass, omitQuery);
     }
 
     // --- MODULE 2: ATTENDANCE & EXAM PROCESSOR SCRIPT ---
@@ -1735,6 +1864,7 @@
         document.getElementById('output-a').value = outputARows.length ? outputARows.join('\n') : "No columns or records in Group A.";
         document.getElementById('output-b').value = outputBRows.length ? outputBRows.join('\n') : "No columns or records in Group B.";
     }
+
 
     // --- BULLETPROOF COPY FUNCTION ---
     window.copyText = function(elementId, btn) {
