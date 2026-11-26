@@ -645,6 +645,173 @@
             .ui-modern .btn-action, .ui-modern label.btn-action { padding:.35rem .55rem; }
         }
 
+        /* Max Scores Allocated Section */
+        .max-scores-panel {
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            background: var(--surface);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .max-scores-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+        .max-scores-title {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .max-scores-meta {
+            margin: 0.15rem 0 0;
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+        .max-scores-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .max-scores-toggle {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            padding: 0.3rem 0.65rem;
+            border-radius: 0.4rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .max-scores-toggle.active {
+            border-color: var(--primary);
+            background: var(--accent-soft);
+            color: var(--accent-text);
+        }
+        .max-scores-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .max-scores-class-head {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+        .max-scores-class-head strong {
+            color: var(--text);
+        }
+        .max-scores-groups {
+            display: grid;
+            gap: 0.75rem;
+            grid-template-columns: 1fr;
+        }
+        .max-scores-groups.cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        @media (max-width: 1100px) {
+            .max-scores-groups.cols-3 { grid-template-columns: 1fr; }
+        }
+        .max-group-card {
+            border: 1px solid var(--border);
+            border-radius: 0.55rem;
+            background: var(--card-bg);
+            overflow: hidden;
+        }
+        .max-group-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.55rem 0.75rem;
+            border-bottom: 1px solid var(--line);
+            background: var(--surface-2);
+        }
+        .max-group-info {
+            font-size: 0.76rem;
+            color: var(--muted);
+        }
+        .max-group-info strong {
+            color: var(--text);
+        }
+        .max-copy-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            padding: 0.25rem 0.55rem;
+            border-radius: 0.35rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .max-copy-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .max-copy-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .max-items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1px;
+            background: var(--line);
+        }
+        .max-item-cell {
+            background: var(--card-bg);
+            padding: 0.45rem 0.65rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            min-width: 0;
+        }
+        .max-item-left { min-width: 0; }
+        .max-item-code {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .max-item-sub {
+            font-size: 0.68rem;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .max-item-val {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-variant-numeric: tabular-nums;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+        .max-item-val.empty {
+            color: var(--muted);
+            opacity: 0.45;
+            font-weight: 500;
+        }
+        .max-scores-empty, .max-scores-warn {
+            font-size: 0.78rem;
+            color: var(--muted);
+            padding: 0.5rem 0.25rem;
+        }
+        .max-scores-warn {
+            color: var(--bad);
+        }
+
+        .ui-modern #panel-grades.active { grid-template-rows: auto auto auto minmax(180px, 1fr); }
+        .ui-modern #max-scores-panel { grid-column: 1 / -1; margin-bottom: 0; padding: 0.65rem 0.8rem; gap: 0.5rem; }
+
         @media (max-width:899px) {
             .ui-modern body { position:static; height:auto; overflow:auto; }
             .ui-modern .tool-panel { overflow:visible; }
@@ -743,6 +910,25 @@
 
         <div id="progress-container" class="progress-container">
             <div id="progress-bar" class="progress-bar">0%</div>
+        </div>
+
+        <div id="max-scores-panel" class="max-scores-panel">
+            <div class="max-scores-top">
+                <div>
+                    <h2 class="max-scores-title">Activity Max Scores Allocated</h2>
+                    <p class="max-scores-meta" id="max-scores-meta">Reads allocated max scores from the Settings tab (College) or Term 1–3 tabs (Senior High School).</p>
+                </div>
+                <div class="max-scores-controls" id="max-scores-controls" style="display: none;">
+                    <button type="button" class="max-scores-toggle" id="btn-toggle-empty-shs" style="display: none;" onclick="toggleEmptyShsSlots()">Show Empty SHS Slots</button>
+                    <div class="seg" id="max-scope-seg" role="group" aria-label="Max score scope">
+                        <button type="button" id="max-scope-cat" class="on" onclick="setMaxScoresScope('category')">Selected Category</button>
+                        <button type="button" id="max-scope-all" onclick="setMaxScoresScope('all')">All Categories</button>
+                    </div>
+                </div>
+            </div>
+            <div id="max-scores-body" class="max-scores-body">
+                <div class="max-scores-empty">Upload a College or Senior High School Excel class record above to view the max scores allocated to each activity.</div>
+            </div>
         </div>
 
         <div class="output-grid-2col">
@@ -1013,15 +1199,24 @@
             detectedSubject = String(inputRows[11] && inputRows[11][6] || 'SHS Subject').trim();
             detectedSection = String(inputRows[15] && inputRows[15][6] || 'SHS Section').trim();
         }
+        let settingsRows = null;
         if (workbook.Sheets['Settings']) {
-            const settingsJson = XLSX.utils.sheet_to_json(workbook.Sheets['Settings'], { header: 1 });
-            if (settingsJson[7] && settingsJson[7][4]) detectedSubject = String(settingsJson[7][4]).trim();
-            if (settingsJson[4] && settingsJson[4][15]) detectedSection = String(settingsJson[4][15]).trim();
+            const wsSettings = workbook.Sheets['Settings'];
+            const rngSettings = usedRange(wsSettings, true);
+            settingsRows = rngSettings
+                ? XLSX.utils.sheet_to_json(wsSettings, { header: 1, range: rngSettings, blankrows: true, defval: '' })
+                : [];
+            if (settingsRows[7] && settingsRows[7][4]) detectedSubject = String(settingsRows[7][4]).trim();
+            if (settingsRows[4] && settingsRows[4][15]) detectedSection = String(settingsRows[4][15]).trim();
         }
 
         const sheetsData = {};
         toParse.forEach(sheetName => {
-            if (sheetName === 'Settings' || sheetName === 'Data Input') return; // only needed for class detection above
+            if (sheetName === 'Data Input') return; // only needed for class detection above
+            if (sheetName === 'Settings') {
+                if (settingsRows) sheetsData['Settings'] = settingsRows;
+                return;
+            }
             const ws = workbook.Sheets[sheetName];
             if (!ws || !ws['!ref']) { sheetsData[sheetName] = []; return; }
             const rng = usedRange(ws, isSHS);
@@ -1377,8 +1572,391 @@
         else box.value = problems.length ? problems.join('\n') : 'No Summary tab records found.';
     }
 
+    // --- ACTIVITY MAX SCORES ALLOCATED (College Settings tab & SHS Term 1-3 tabs) ---
+    let maxScoresScope = 'category';
+    let showEmptyShsSlots = false;
+
+    window.setMaxScoresScope = function (scope) {
+        maxScoresScope = scope;
+        document.getElementById('max-scope-cat').classList.toggle('on', scope === 'category');
+        document.getElementById('max-scope-all').classList.toggle('on', scope === 'all');
+        renderMaxScoresSection();
+    };
+
+    window.toggleEmptyShsSlots = function () {
+        showEmptyShsSlots = !showEmptyShsSlots;
+        const btn = document.getElementById('btn-toggle-empty-shs');
+        btn.classList.toggle('active', showEmptyShsSlots);
+        btn.textContent = showEmptyShsSlots ? 'Hide Empty SHS Slots' : 'Show Empty SHS Slots';
+        renderMaxScoresSection();
+    };
+
+    function msCellText(v) {
+        return v === undefined || v === null ? '' : String(v).trim();
+    }
+
+    function msParseNum(v) {
+        if (v === undefined || v === null) return null;
+        const s = String(v).trim();
+        if (s === '') return null;
+        const n = Number(s);
+        return Number.isFinite(n) ? n : null;
+    }
+
+    function msFormatDate(v) {
+        if (v === undefined || v === null) return '';
+        if (typeof v === 'number' && v > 25000 && v < 80000 && typeof XLSX !== 'undefined' && XLSX.SSF) {
+            const parsed = XLSX.SSF.parse_date_code(v);
+            if (parsed && parsed.y && parsed.m && parsed.d) {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                return parsed.d + '-' + (months[parsed.m - 1] || parsed.m) + '-' + String(parsed.y).slice(-2);
+            }
+        }
+        return String(v).trim();
+    }
+
+    function msFormatWeight(v) {
+        if (v === undefined || v === null) return '';
+        const s = String(v).trim();
+        if (!s) return '';
+        if (s.endsWith('%')) return s;
+        const n = Number(s);
+        if (Number.isFinite(n) && n > 0 && n <= 1) return Math.round(n * 100) + '%';
+        if (Number.isFinite(n) && n > 1 && n <= 100) return Math.round(n) + '%';
+        return s;
+    }
+
+    function msBuildGroup(key, title, items, weight) {
+        const allocated = items.filter(it => it.maxScore !== null && it.maxScore > 0);
+        const totalPoints = allocated.reduce((acc, it) => acc + (it.maxScore || 0), 0);
+        return { key, title, weight, items, allocatedCount: allocated.length, totalPoints };
+    }
+
+    function extractCollegeMaxScores(item, period) {
+        const periodLabelMap = { PRELIMS: 'Prelims', MIDTERM: 'Midterm', 'PRE-FINALS': 'Pre-Finals', FINALS: 'Finals' };
+        if (!periodLabelMap[period]) {
+            return {
+                classKey: item.classKey, fileName: item.name, format: 'COLLEGE', sourceSheet: 'Settings',
+                period, periodLabel: period,
+                categories: { lab: msBuildGroup('lab', 'Performance Tasks / Lab', []), quizzes: msBuildGroup('quizzes', 'Quizzes', []), exam: msBuildGroup('exam', 'Major Examination', []) },
+                warning: 'Select Prelims, Midterm, Pre-Finals, or Finals to view College max scores.'
+            };
+        }
+        const rows = item.sheetsData && item.sheetsData['Settings'];
+        if (!rows || !rows.length) {
+            return {
+                classKey: item.classKey, fileName: item.name, format: 'COLLEGE', sourceSheet: 'Settings',
+                period, periodLabel: periodLabelMap[period],
+                categories: { lab: msBuildGroup('lab', 'Performance Tasks / Lab', []), quizzes: msBuildGroup('quizzes', 'Quizzes', []), exam: msBuildGroup('exam', 'Major Examination', []) },
+                warning: 'Settings tab not found in this workbook. Re-upload the .xlsx file to extract max scores.'
+            };
+        }
+        const periodPatterns = {
+            PRELIMS: /^prelims?$/i, MIDTERM: /^midterms?$/i, 'PRE-FINALS': /^pre[\s\-_]*finals?$/i, FINALS: /^finals?$/i
+        };
+        const defaultCols = {
+            PRELIMS: { pctCol: 6, dateCol: 7, pointsCol: 8 },
+            MIDTERM: { pctCol: 10, dateCol: 11, pointsCol: 12 },
+            'PRE-FINALS': { pctCol: 14, dateCol: 15, pointsCol: 16 },
+            FINALS: { pctCol: 18, dateCol: 19, pointsCol: 20 }
+        };
+        let periodRow = -1, periodCol = -1;
+        const targetRegex = periodPatterns[period];
+        for (let r = 0; r < Math.min(rows.length, 25); r++) {
+            const row = rows[r] || [];
+            for (let c = 0; c < row.length; c++) {
+                const txt = msCellText(row[c]);
+                if (txt && targetRegex.test(txt)) { periodRow = r; periodCol = c; break; }
+            }
+            if (periodRow >= 0) break;
+        }
+        let { pctCol, dateCol, pointsCol } = defaultCols[period];
+        if (periodRow >= 0 && periodCol >= 0) {
+            pctCol = periodCol; dateCol = periodCol + 1; pointsCol = periodCol + 2;
+            for (let sr = periodRow + 1; sr <= Math.min(periodRow + 2, rows.length - 1); sr++) {
+                const subRow = rows[sr] || [];
+                for (let sc = periodCol; sc <= Math.min(periodCol + 3, subRow.length - 1); sc++) {
+                    const subTxt = msCellText(subRow[sc]).toLowerCase();
+                    if (subTxt === '%' || subTxt.includes('weight')) pctCol = sc;
+                    else if (subTxt === 'date') dateCol = sc;
+                    else if (subTxt.includes('point') || subTxt.includes('max')) pointsCol = sc;
+                }
+            }
+        }
+        const labItems = [], quizItems = [], examItems = [];
+        let activeSection = null;
+        const sectionWeight = { lab: '', quizzes: '', exam: '' };
+        const scanStart = periodRow >= 0 ? periodRow + 2 : 12;
+
+        for (let r = scanStart; r < rows.length; r++) {
+            const row = rows[r] || [];
+            const leftTexts = row.slice(0, 6).map(msCellText).filter(Boolean);
+            if (!leftTexts.length) continue;
+            const joinedLeft = leftTexts.join(' ');
+            const upperLeft = joinedLeft.toUpperCase();
+
+            if (/PERFORMANCE\s*TASKS?|LAB\s*EXERCISES?/i.test(upperLeft) && !/\d/.test(upperLeft) && !leftTexts.some(t => /^PTL\d+$/i.test(t))) {
+                activeSection = 'lab'; continue;
+            }
+            if ((/^QUIZZES$/i.test(upperLeft) || (/QUIZZES/i.test(upperLeft) && !/\d/.test(upperLeft)))) {
+                activeSection = 'quizzes'; continue;
+            }
+            if (/MAJOR\s*EXAM/i.test(upperLeft) && !leftTexts.some(t => /^EX$/i.test(t))) {
+                activeSection = 'exam'; continue;
+            }
+
+            const codeToken = leftTexts.find(t => /^(PTL\d+|Q\d+|EX)$/i.test(t)) || '';
+            const labelToken = leftTexts.find(t => t !== codeToken && !/^\d+(\.\d+)?$/.test(t)) || codeToken;
+
+            let itemCategory = null;
+            if (/^PTL\d+$/i.test(codeToken) || /performance\s*task|lab\s*\d+/i.test(labelToken)) itemCategory = 'lab';
+            else if (/^Q\d+$/i.test(codeToken) || /quiz\s*\d+/i.test(labelToken)) itemCategory = 'quizzes';
+            else if (/^EX$/i.test(codeToken) || /^exam$/i.test(labelToken)) itemCategory = 'exam';
+            else if (activeSection && (codeToken || labelToken) && !/total|100%|passing|grading/i.test(joinedLeft)) itemCategory = activeSection;
+
+            if (!itemCategory) continue;
+            const w = msFormatWeight(row[pctCol]);
+            if (w && !sectionWeight[itemCategory]) sectionWeight[itemCategory] = w;
+            const entry = {
+                colIndex: pointsCol,
+                code: codeToken.toUpperCase() || labelToken,
+                label: labelToken || codeToken,
+                maxScore: msParseNum(row[pointsCol]),
+                date: msFormatDate(row[dateCol]),
+                weight: w || sectionWeight[itemCategory] || ''
+            };
+            if (itemCategory === 'lab') labItems.push(entry);
+            else if (itemCategory === 'quizzes') quizItems.push(entry);
+            else examItems.push(entry);
+        }
+
+        return {
+            classKey: item.classKey, fileName: item.name, format: 'COLLEGE', sourceSheet: 'Settings',
+            period, periodLabel: periodLabelMap[period],
+            categories: {
+                lab: msBuildGroup('lab', 'Performance Tasks / Lab', labItems, sectionWeight.lab),
+                quizzes: msBuildGroup('quizzes', 'Quizzes', quizItems, sectionWeight.quizzes),
+                exam: msBuildGroup('exam', 'Major Examination', examItems, sectionWeight.exam)
+            }
+        };
+    }
+
+    function extractSHSMaxScores(item, period) {
+        const termMap = { TERM1: 'Term 1', TERM2: 'Term 2', TERM3: 'Term 3' };
+        const termName = termMap[period];
+        if (!termName) {
+            return {
+                classKey: item.classKey, fileName: item.name, format: 'SHS', sourceSheet: 'Term 1 / Term 2 / Term 3',
+                period, periodLabel: period,
+                categories: { lab: msBuildGroup('lab', 'Written / Oral Works', []), quizzes: msBuildGroup('quizzes', 'Product / Performance Tasks', []), exam: msBuildGroup('exam', 'Examination', []) },
+                warning: 'Select SHS Term 1, Term 2, or Term 3 to view SHS max scores.'
+            };
+        }
+        const rows = (item.sheetsData && item.sheetsData[termName]) || [];
+        if (!rows.length) {
+            return {
+                classKey: item.classKey, fileName: item.name, format: 'SHS', sourceSheet: termName,
+                period, periodLabel: termName,
+                categories: { lab: msBuildGroup('lab', 'Written / Oral Works', []), quizzes: msBuildGroup('quizzes', 'Product / Performance Tasks', []), exam: msBuildGroup('exam', 'Examination', []) },
+                warning: termName + ' sheet is empty or could not be read.'
+            };
+        }
+        let firstStudentRow = -1;
+        for (let r = 6; r < Math.min(rows.length, 25); r++) {
+            const row = rows[r] || [];
+            if (msCellText(row[2]) && /\d{5,}/.test(msCellText(row[2])) && msCellText(row[3]).includes(',')) {
+                firstStudentRow = r; break;
+            }
+        }
+        if (firstStudentRow < 0) firstStudentRow = 8;
+        let numberRowIdx = 4;
+        for (let r = 2; r < firstStudentRow; r++) {
+            const row = rows[r] || [];
+            if (msCellText(row[4]) === '1' && msCellText(row[5]) === '2') { numberRowIdx = r; break; }
+        }
+        const maxRowIdx = numberRowIdx + 1 < firstStudentRow ? numberRowIdx + 1 : 5;
+        const subLabelRowIdx = firstStudentRow - 1 > maxRowIdx ? firstStudentRow - 1 : 7;
+        const numberRow = rows[numberRowIdx] || [];
+        const maxRow = rows[maxRowIdx] || [];
+        const subLabelRow = rows[subLabelRowIdx] || [];
+
+        const buildShsRange = (cols, prefix, defaultExamLabels) => cols.map((colIdx, idx) => {
+            const numHeader = msCellText(numberRow[colIdx]);
+            const subLabel = msCellText(subLabelRow[colIdx]);
+            const code = defaultExamLabels ? (numHeader || defaultExamLabels[idx] || (prefix + (idx + 1))) : (prefix + (numHeader || (idx + 1)));
+            const label = defaultExamLabels
+                ? (subLabel ? `${code} (${subLabel})` : code)
+                : (subLabel ? `${prefix} ${numHeader || (idx + 1)} · ${subLabel}` : `${prefix} ${numHeader || (idx + 1)}`);
+            return { colIndex: colIdx, code, label, maxScore: msParseNum(maxRow[colIdx]), date: '' };
+        });
+
+        return {
+            classKey: item.classKey, fileName: item.name, format: 'SHS', sourceSheet: termName,
+            period, periodLabel: termName,
+            categories: {
+                lab: msBuildGroup('lab', 'Written / Oral Works (WW1–20)', buildShsRange(Array.from({ length: 20 }, (_, i) => 4 + i), 'WW')),
+                quizzes: msBuildGroup('quizzes', 'Product / Performance Tasks (PT1–15)', buildShsRange(Array.from({ length: 15 }, (_, i) => 27 + i), 'PT')),
+                exam: msBuildGroup('exam', 'Examination (ST1, ST2, TE)', buildShsRange([45, 46, 47], 'EX', ['ST1', 'ST2', 'TE']))
+            }
+        };
+    }
+
+    function extractMaxScoresForClass(item, period) {
+        return isSHSClassFile(item) ? extractSHSMaxScores(item, period) : extractCollegeMaxScores(item, period);
+    }
+
+    window.copyMaxScoreRow = function (btn, text) {
+        if (!text) return;
+        const done = () => {
+            const orig = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = orig; }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); } catch (e) {}
+                document.body.removeChild(ta); done();
+            });
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta); done();
+        }
+    };
+
+    function renderMaxScoresSection() {
+        const metaEl = document.getElementById('max-scores-meta');
+        const controlsEl = document.getElementById('max-scores-controls');
+        const shsBtn = document.getElementById('btn-toggle-empty-shs');
+        const scopeSeg = document.getElementById('max-scope-seg');
+        const bodyEl = document.getElementById('max-scores-body');
+        if (!metaEl || !bodyEl) return;
+
+        const selectedClass = classSelect.value;
+        const period = periodSelect.value;
+        const category = categorySelect.value;
+        const relevant = selectedClass === 'ALL'
+            ? loadedProcessedData
+            : loadedProcessedData.filter(item => item.classKey === selectedClass);
+
+        if (!relevant.length) {
+            metaEl.textContent = 'Reads allocated max scores from the Settings tab (College) or Term 1–3 tabs (Senior High School).';
+            controlsEl.style.display = 'none';
+            bodyEl.innerHTML = '<div class="max-scores-empty">Upload a College or Senior High School Excel class record above to view the max scores allocated to each activity.</div>';
+            return;
+        }
+
+        const results = relevant.map(item => extractMaxScoresForClass(item, period));
+        controlsEl.style.display = 'flex';
+        shsBtn.style.display = results.some(r => r.format === 'SHS') ? 'inline-block' : 'none';
+        scopeSeg.style.display = category === 'attendance' ? 'none' : 'inline-flex';
+
+        if (results.length === 1) {
+            const r = results[0];
+            metaEl.textContent = (r.format === 'SHS' ? 'Senior High School Template' : 'College / Tertiary Template') +
+                ' · Source tab: ' + r.sourceSheet + ' · ' + r.periodLabel;
+        } else {
+            metaEl.textContent = 'Showing ' + results.length + ' loaded class record(s) · Dynamic template detection active';
+        }
+
+        const effectiveScope = category === 'attendance' ? 'all' : maxScoresScope;
+        bodyEl.innerHTML = '';
+
+        results.forEach(res => {
+            if (results.length > 1) {
+                const head = document.createElement('div');
+                head.className = 'max-scores-class-head';
+                head.innerHTML = `<strong>${escHtml(res.classKey)}</strong> · ${res.format === 'SHS' ? 'SHS' : 'College'} (${escHtml(res.sourceSheet)}) · ${escHtml(res.periodLabel)}`;
+                bodyEl.appendChild(head);
+            }
+
+            if (res.warning) {
+                const warn = document.createElement('div');
+                warn.className = 'max-scores-warn';
+                warn.textContent = '⚠ ' + res.warning;
+                bodyEl.appendChild(warn);
+                return;
+            }
+
+            const groups = (effectiveScope === 'category' && category !== 'attendance')
+                ? [res.categories[category]]
+                : [res.categories.lab, res.categories.quizzes, res.categories.exam];
+
+            const wrap = document.createElement('div');
+            wrap.className = 'max-scores-groups' + (groups.length === 3 ? ' cols-3' : '');
+
+            groups.forEach(group => {
+                const card = document.createElement('div');
+                card.className = 'max-group-card';
+
+                const head = document.createElement('div');
+                head.className = 'max-group-head';
+
+                const info = document.createElement('div');
+                info.className = 'max-group-info';
+                info.innerHTML = `<strong>${escHtml(group.title)}</strong>` +
+                    (group.weight ? ` · Weight ${escHtml(group.weight)}` : '') +
+                    ` · ${group.allocatedCount}/${group.items.length} allocated · ${group.totalPoints} pts total`;
+
+                const copyBtn = document.createElement('button');
+                copyBtn.type = 'button';
+                copyBtn.className = 'max-copy-btn';
+                copyBtn.textContent = 'Copy Max Row';
+                copyBtn.disabled = group.allocatedCount === 0;
+                const copyRowText = group.items.map(it => it.maxScore !== null ? String(it.maxScore) : '').join('\t');
+                copyBtn.onclick = () => window.copyMaxScoreRow(copyBtn, copyRowText);
+
+                head.appendChild(info);
+                head.appendChild(copyBtn);
+                card.appendChild(head);
+
+                const visibleItems = (res.format === 'SHS' && !showEmptyShsSlots)
+                    ? group.items.filter(it => it.maxScore !== null && it.maxScore > 0)
+                    : group.items;
+
+                if (!visibleItems.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'max-scores-empty';
+                    empty.style.padding = '0.75rem';
+                    empty.textContent = `No max scores allocated for ${group.title} in ${res.periodLabel}.`;
+                    card.appendChild(empty);
+                } else {
+                    const grid = document.createElement('div');
+                    grid.className = 'max-items-grid';
+                    visibleItems.forEach(act => {
+                        const cell = document.createElement('div');
+                        cell.className = 'max-item-cell';
+                        const subText = act.date ? `${act.label} · ${act.date}` : act.label;
+                        const hasScore = act.maxScore !== null;
+                        cell.innerHTML = `
+                            <div class="max-item-left">
+                                <div class="max-item-code" title="${escHtml(act.label)}">${escHtml(act.code)}</div>
+                                <div class="max-item-sub" title="${escHtml(subText)}">${escHtml(subText)}</div>
+                            </div>
+                            <div class="max-item-val${hasScore ? '' : ' empty'}">${hasScore ? act.maxScore : '—'}</div>
+                        `;
+                        grid.appendChild(cell);
+                    });
+                    card.appendChild(grid);
+                }
+
+                wrap.appendChild(card);
+            });
+
+            bodyEl.appendChild(wrap);
+        });
+    }
+
     function renderOutput() {
-        if (!loadedProcessedData.length) return;
+        if (!loadedProcessedData.length) {
+            renderMaxScoresSection();
+            return;
+        }
         const selectedClass = classSelect.value;
         const period = periodSelect.value;
         const category = categorySelect.value;
@@ -1473,6 +2051,7 @@
         });
         outputGrades.value = allRowsOutput.length ? allRowsOutput.join('\n') : "No student records found.";
         renderFinalsNeeded(selectedClass, omitQuery);
+        renderMaxScoresSection();
     }
 
     // --- MODULE 2: ATTENDANCE & EXAM PROCESSOR SCRIPT ---
@@ -2387,6 +2966,7 @@
         document.getElementById('finals-output').value = '';
         progressContainer.style.display = 'none';
         fileInfoGrades.textContent = 'Ready for file selection.';
+        renderMaxScoresSection();
     }
     function clearAttendanceData() {
         rawAttendanceLines = []; examReportRecords = []; maxDetectedColumns = 0;
