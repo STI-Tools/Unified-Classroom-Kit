@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unified Classroom Data Toolkit (Master)</title>
+    <script>
+    (function () {
+        var d = document.documentElement, t = null, u = null;
+        try { t = localStorage.getItem('ucdt_theme'); u = localStorage.getItem('ucdt_ui'); } catch (e) {}
+        if (t !== 'dark' && t !== 'light') t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+        d.dataset.theme = t;
+        d.classList.add(u === 'classic' ? 'ui-classic' : 'ui-modern');
+    })();
+    </script>
     <!-- SheetJS CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- JSZip CDN -->
@@ -48,11 +57,11 @@
             margin-top: 0;
             margin-bottom: 0.5rem;
             text-align: center;
-            color: #1e293b;
+            color: var(--text);
         }
 
         .subtitle {
-            color: #64748b;
+            color: var(--muted);
             text-align: center;
             margin-top: 0;
             margin-bottom: 1rem;
@@ -62,9 +71,9 @@
         /* Update Notification Banner Styles */
         .update-banner {
             display: none;
-            background: #e0e7ff;
-            border: 1px solid #c7d2fe;
-            color: #3730a3;
+            background: var(--accent-soft-2);
+            border: 1px solid var(--accent-soft-3);
+            color: var(--accent-text);
             padding: 0.75rem 1rem;
             border-radius: 0.5rem;
             margin-bottom: 1.5rem;
@@ -97,8 +106,8 @@
 
         .device-badge {
             display: inline-block;
-            background: #e2e8f0;
-            color: #334155;
+            background: var(--line);
+            color: var(--text-2);
             padding: 0.25rem 0.75rem;
             border-radius: 1rem;
             font-size: 0.75rem;
@@ -109,7 +118,7 @@
         .update-check-btn {
             background: none;
             border: 1px solid var(--border);
-            color: #475569;
+            color: var(--text-2);
             padding: 0.25rem 0.75rem;
             border-radius: 1rem;
             font-size: 0.75rem;
@@ -117,26 +126,26 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .update-check-btn:hover { background: #f1f5f9; color: var(--primary); border-color: var(--primary); }
+        .update-check-btn:hover { background: var(--surface-2); color: var(--primary); border-color: var(--primary); }
 
         .tabs {
             display: flex;
             justify-content: center;
             gap: 1rem;
             margin-bottom: 2rem;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 2px solid var(--line);
             padding-bottom: 1rem;
             flex-wrap: wrap;
         }
 
         .tab-btn {
-            background: #e2e8f0;
+            background: var(--line);
             border: none;
             padding: 0.75rem 1.25rem;
             border-radius: 0.5rem;
             font-weight: 600;
             cursor: pointer;
-            color: #475569;
+            color: var(--text-2);
             transition: all 0.2s;
         }
 
@@ -167,7 +176,7 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            background: #f8fafc;
+            background: var(--surface);
             padding: 1rem;
             border: 1px solid var(--border);
             border-radius: 0.75rem;
@@ -176,7 +185,7 @@
         label {
             font-size: 0.875rem;
             font-weight: 600;
-            color: #334155;
+            color: var(--text-2);
         }
 
         select, input[type="text"], input[type="number"] {
@@ -184,7 +193,7 @@
             border: 1px solid var(--border);
             border-radius: 0.5rem;
             font-size: 1rem;
-            background: #fff;
+            background: var(--input-bg);
             outline: none;
             box-sizing: border-box;
             width: 100%;
@@ -201,7 +210,7 @@
             border-radius: 0.75rem;
             padding: 2rem 1.5rem;
             text-align: center;
-            background: #f1f5f9;
+            background: var(--surface-2);
             cursor: pointer;
             transition: all 0.2s ease;
             margin-bottom: 1.5rem;
@@ -209,13 +218,13 @@
 
         .drop-zone.dragover {
             border-color: var(--primary);
-            background: #eef2ff;
+            background: var(--accent-soft);
         }
 
         .drop-zone p {
             margin: 0;
             font-size: 1rem;
-            color: #475569;
+            color: var(--text-2);
             pointer-events: none;
         }
 
@@ -232,7 +241,7 @@
         .progress-container {
             display: none;
             width: 100%;
-            background-color: #e2e8f0;
+            background-color: var(--line);
             border-radius: 0.5rem;
             overflow: hidden;
             margin-bottom: 1rem;
@@ -287,7 +296,7 @@
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 0.85rem;
             resize: vertical;
-            background: #fdfdfd;
+            background: var(--input-bg);
             box-sizing: border-box;
             white-space: pre;
             overflow-x: auto;
@@ -310,7 +319,7 @@
 
         .file-info {
             font-size: 0.875rem;
-            color: #64748b;
+            color: var(--muted);
             margin: 0;
             margin-bottom: 1.5rem;
             font-weight: 500;
@@ -328,7 +337,7 @@
         }
         .calc-hint {
             font-size: 0.75rem;
-            color: #64748b;
+            color: var(--muted);
             margin: 0;
         }
 
@@ -348,25 +357,25 @@
             overflow-y: auto;
             border: 1px solid var(--border);
             border-radius: 0.5rem;
-            background: #fff;
+            background: var(--input-bg);
             padding: 0.75rem;
         }
 
         .roster-item {
             font-size: 0.85rem;
             padding: 6px 8px;
-            border-bottom: 1px dashed #e2e8f0;
+            border-bottom: 1px dashed var(--line);
             display: flex;
             flex-direction: column;
             gap: 2px;
         }
 
-        .missing-badge { color: #dc2626; font-weight: bold; font-size: 0.75rem; }
-        .found-badge { color: #16a34a; font-weight: 500; font-size: 0.75rem; }
+        .missing-badge { color: var(--bad); font-weight: bold; font-size: 0.75rem; }
+        .found-badge { color: var(--ok); font-weight: 500; font-size: 0.75rem; }
 
         /* Module 3 Specific Styles */
         .timeline-container {
-            background: #f8fafc;
+            background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 0.75rem;
             padding: 1.5rem;
@@ -400,14 +409,14 @@
         }
 
         .column-card:active { cursor: grabbing; }
-        .column-card.group-a { border-color: #4f46e5; background: #eef2ff; }
-        .column-card.group-b { border-color: #16a34a; background: #f0fdf4; }
-        .column-card.omitted { border-color: #cbd5e1; background: #f1f5f9; opacity: 0.5; }
+        .column-card.group-a { border-color: #4f46e5; background: var(--accent-soft); }
+        .column-card.group-b { border-color: #16a34a; background: var(--success-soft); }
+        .column-card.omitted { border-color: var(--border); background: var(--surface-2); opacity: 0.5; }
 
         .card-title {
             font-size: 0.75rem;
             font-weight: 600;
-            color: #1e293b;
+            color: var(--text);
             overflow: hidden;
             text-overflow: ellipsis;
             display: -webkit-box;
@@ -418,7 +427,7 @@
 
         .card-date, .card-max {
             font-size: 0.65rem;
-            color: #64748b;
+            color: var(--muted);
             margin-bottom: 0.15rem;
         }
 
@@ -430,8 +439,8 @@
         }
 
         .card-btn {
-            background: #e2e8f0;
-            color: #334155;
+            background: var(--line);
+            color: var(--text-2);
             border: none;
             border-radius: 0.25rem;
             padding: 0.15rem 0.3rem;
@@ -441,9 +450,9 @@
             text-align: center;
         }
 
-        .card-btn:hover { background: #cbd5e1; }
-        .card-btn.combine { background: #e0e7ff; color: #3730a3; }
-        .card-btn.combine:hover { background: #c7d2fe; }
+        .card-btn:hover { background: var(--border); }
+        .card-btn.combine { background: var(--accent-soft-2); color: var(--accent-text); }
+        .card-btn.combine:hover { background: var(--accent-soft-3); }
 
         .split-divider {
             background: #dc2626;
@@ -487,8 +496,8 @@
             font-family: system-ui, sans-serif;
             font-size: 0.8rem;
             overflow-y: auto;
-            background: #f8fafc;
-            color: #334155;
+            background: var(--surface);
+            color: var(--text-2);
             box-sizing: border-box;
             line-height: 1.4rem;
         }
@@ -499,7 +508,7 @@
             display: inline-flex; align-items: center; gap: 0.4rem;
             padding: 0.35rem 0.5rem 0.35rem 0.75rem;
             border: 1px solid var(--border); border-radius: 999px;
-            background: #fff; color: #475569; font-size: 0.8rem; cursor: pointer;
+            background: var(--input-bg); color: var(--text-2); font-size: 0.8rem; cursor: pointer;
             max-width: 100%;
         }
         .split-file-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
@@ -509,7 +518,145 @@
             font-size: 0.95rem; line-height: 1; padding: 0 0.25rem; opacity: 0.7;
         }
         .split-file-tab .tab-x:hover { opacity: 1; }
-    </style>
+    
+        /* ===== THEME (light / dark) ===== */
+        :root {
+            color-scheme: light;
+            --surface:#f8fafc; --surface-2:#f1f5f9; --line:#e2e8f0; --muted:#64748b; --text-2:#334155;
+            --input-bg:#ffffff; --accent-soft:#eef2ff; --accent-soft-2:#e0e7ff; --accent-soft-3:#c7d2fe;
+            --accent-text:#3730a3; --success-soft:#f0fdf4; --ok:#16a34a; --bad:#dc2626;
+        }
+        [data-theme="dark"] {
+            color-scheme: dark;
+            --primary:#6366f1; --primary-hover:#818cf8; --bg:#0b1020; --card-bg:#121a2e; --text:#e5e7eb;
+            --border:#2f3b52; --surface:#0f172a; --surface-2:#1a2438; --line:#243049; --muted:#94a3b8;
+            --text-2:#cbd5e1; --input-bg:#0b1220; --accent-soft:#1e1b4b; --accent-soft-2:#2b2a63;
+            --accent-soft-3:#4338ca; --accent-text:#c7d2fe; --success-soft:#052e1a; --ok:#4ade80; --bad:#f87171;
+        }
+        body { transition: background-color .2s, color .2s; }
+        input, select, textarea { color: var(--text); }
+        .t-short { display: none; }
+
+        /* toolbar */
+        .seg { display:inline-flex; border:1px solid var(--border); border-radius:999px; overflow:hidden; }
+        .seg button { border:0; background:transparent; color:var(--text-2); padding:.25rem .7rem; font-size:.75rem; font-weight:600; cursor:pointer; }
+        .seg button.on { background:var(--primary); color:#fff; }
+        .danger-hover:hover { color:var(--bad); border-color:var(--bad); background:transparent; }
+        label.btn-action { background:var(--primary); color:#fff; padding:.6rem 1.2rem; border-radius:.375rem; font-weight:600; font-size:1rem; }
+        label.btn-action:hover { background:var(--primary-hover); }
+        .link-btn { background:none; border:0; color:var(--primary); font-weight:700; cursor:pointer; text-decoration:underline; padding:0; font-size:inherit; }
+
+        /* review dialog */
+        dialog#review-dialog { width:min(860px,94vw); max-height:88vh; border:1px solid var(--border); border-radius:1rem; background:var(--card-bg); color:var(--text); padding:0; box-shadow:0 20px 50px rgb(0 0 0/.35); }
+        dialog#review-dialog::backdrop { background:rgb(2 6 23/.55); }
+        .dlg-in { display:flex; flex-direction:column; max-height:88vh; }
+        .dlg-head, .dlg-foot { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.8rem 1.1rem; }
+        .dlg-head { border-bottom:1px solid var(--line); } .dlg-foot { border-top:1px solid var(--line); }
+        .dlg-head h3 { margin:0; font-size:1.05rem; }
+        .dlg-sub { margin:0; padding:.6rem 1.1rem 0; font-size:.85rem; color:var(--muted); }
+        #review-list { overflow-y:auto; padding:.7rem 1.1rem; display:flex; flex-direction:column; gap:.6rem; }
+        .rv-row { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; padding:.7rem; border:1px solid var(--border); border-radius:.7rem; background:var(--surface); }
+        .rv-row.done { border-color:var(--ok); }
+        .rv-cap { font-size:.75rem; color:var(--muted); margin-bottom:.35rem; }
+        .rv-ids { display:grid; grid-template-columns:auto 1fr; gap:.2rem .6rem; align-items:center; font-size:.85rem; }
+        .rv-ids .rv-k { color:var(--muted); font-size:.72rem; text-transform:uppercase; }
+        .rv-ids code { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.95rem; letter-spacing:.04em; }
+        .rv-ids mark { background:var(--bad); color:#fff; border-radius:3px; padding:0 2px; }
+        .rv-right { display:flex; flex-direction:column; gap:.4rem; justify-content:center; }
+        .rv-right select { font-size:.85rem; padding:.4rem; }
+        .rv-use { align-self:flex-start; }
+        .rv-empty { text-align:center; color:var(--muted); padding:1.5rem 0; }
+        @media (max-width:640px) { .rv-row { grid-template-columns:1fr; } }
+
+        /* ===== MODERN UI ===== */
+        .ui-modern body { padding:0; display:block; height:100vh; height:100dvh; overflow:hidden; }
+        .ui-modern .container { width:100%; min-width:0; max-width:none; height:100%; box-sizing:border-box; margin:0; border-radius:0; box-shadow:none; padding:.6rem .9rem;
+            display:grid; grid-template-columns:auto minmax(0,1fr) auto; grid-template-rows:auto minmax(0,1fr); overflow-x:hidden; gap:.5rem .9rem; align-items:center; text-align:left !important; }
+        .ui-modern h1 { grid-column:1; grid-row:1; font-size:1.05rem; margin:0; text-align:left; white-space:nowrap; }
+        .ui-modern .subtitle, .ui-modern .hide-modern { display:none; }
+        .ui-modern .tabs { grid-column:2; grid-row:1; margin:0; padding:0; border:0; justify-content:flex-start; gap:.3rem; flex-wrap:nowrap; overflow-x:auto; }
+        .ui-modern .tab-btn { padding:.38rem .8rem; border-radius:999px; font-size:.85rem; background:transparent; white-space:nowrap; }
+        .ui-modern .tab-btn:hover { background:var(--surface-2); }
+        .ui-modern .tab-btn.active { background:var(--primary); color:#fff; }
+        .ui-modern .t-long { display:none; } .ui-modern .t-short { display:inline; }
+        .ui-modern .header-meta { grid-column:3; grid-row:1; margin:0; gap:.4rem; flex-wrap:nowrap; }
+        .ui-modern .update-banner { position:fixed; left:50%; bottom:.9rem; transform:translateX(-50%); z-index:70; margin:0; box-shadow:0 8px 24px rgb(0 0 0/.3); max-width:92vw; }
+        .ui-modern .tool-panel { grid-column:1 / -1; grid-row:2; min-height:0; height:100%; }
+        .ui-modern .tool-panel.active { display:grid; gap:.5rem .7rem; grid-template-columns:repeat(4,minmax(0,1fr)); grid-template-rows:auto auto minmax(150px,1fr); align-content:stretch; }
+        .ui-modern #panel-splitter.active { grid-template-rows:auto auto auto minmax(150px,1fr); }
+        .ui-modern .controls { display:contents; }
+        .ui-modern .control-group { min-width:0; flex:none; padding:0; border:0; background:none; gap:.2rem; }
+        .ui-modern label { font-size:.72rem; font-weight:600; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .ui-modern select, .ui-modern input[type="text"], .ui-modern input[type="number"] { padding:.42rem .55rem; font-size:.85rem; border-radius:.5rem; }
+        .ui-modern input[type="file"] { font-size:.8rem; padding:.3rem !important; border:1px solid var(--border); border-radius:.5rem; background:var(--input-bg); box-sizing:border-box; width:100%; }
+        .ui-modern .drop-zone { margin:0; padding:.5rem .8rem; border-radius:.6rem; display:flex; align-items:center; justify-content:center; min-width:0; }
+        .ui-modern .drop-zone p { font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .ui-modern .action-bar { margin:0; gap:.5rem; flex-wrap:nowrap; min-width:0; }
+        .ui-modern .file-info { margin:0; font-size:.8rem; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .ui-modern .session-actions { gap:.4rem; flex:none; }
+        .ui-modern .btn-action, .ui-modern label.btn-action { padding:.38rem .75rem; font-size:.8rem; border-radius:.5rem; line-height:1.2; }
+        .ui-modern label.btn-action { color:#fff; font-size:.8rem; white-space:nowrap; overflow:visible; }
+        .ui-modern .progress-container { position:fixed; top:0; left:0; right:0; height:3px; margin:0; border-radius:0; z-index:80; }
+        .ui-modern .progress-bar { font-size:0; }
+        .ui-modern .output-grid-2col, .ui-modern .output-grid-3col, .ui-modern .output-grid-splitter { grid-column:1 / -1; min-height:0; height:100%; gap:.7rem; }
+        .ui-modern .output-grid-2col { grid-template-rows:minmax(0,1fr); }
+        .ui-modern .output-grid-3col { grid-template-columns:minmax(200px,.7fr) 1fr 1fr; grid-template-rows:minmax(0,1fr); }
+        .ui-modern .output-grid-splitter { grid-template-columns:minmax(170px,.6fr) 1fr 1fr; grid-template-rows:minmax(0,1fr); }
+        .ui-modern .output-section, .ui-modern .output-box, .ui-modern .side-roster-box { min-height:0; display:flex; flex-direction:column; gap:.35rem; }
+        .ui-modern .output-header { min-height:1.9rem; }
+        .ui-modern .output-header label { font-size:.8rem; color:var(--text-2); }
+        .ui-modern textarea, .ui-modern .roster-container, .ui-modern .roster-list { flex:1; min-height:0; height:auto; resize:none; border-radius:.6rem; }
+        .ui-modern textarea { padding:.7rem; }
+        .ui-modern #finals-spacing { width:auto; align-self:flex-start; }
+        .ui-modern .calc-hint { font-size:.68rem; }
+        .ui-modern .tl-label { display:none; }
+        .ui-modern #drop-zone-split { grid-column:1 / 3; grid-row:1; }
+        .ui-modern #panel-splitter .controls .control-group:nth-child(1) { grid-column:3; grid-row:1; }
+        .ui-modern #panel-splitter .controls .control-group:nth-child(2) { grid-column:4; grid-row:1; }
+        .ui-modern #file-info-split { grid-column:1 / 3; grid-row:2; }
+        .ui-modern #split-file-tabs { grid-column:3 / 5; grid-row:2; margin:0; }
+        .ui-modern #panel-splitter .timeline-container { grid-column:1 / -1; grid-row:3; padding:.5rem .6rem; margin:0; border-radius:.6rem; }
+        .ui-modern #panel-splitter .output-grid-splitter { grid-row:4; }
+        .ui-modern .timeline-track { min-height:0; padding-bottom:.25rem; gap:.5rem; }
+        .ui-modern .column-card { min-width:132px; max-width:150px; padding:.4rem; }
+        .ui-modern .card-actions { flex-direction:row; flex-wrap:wrap; }
+        .ui-modern #drop-zone-grades { grid-column:1 / 3; }
+        .ui-modern #panel-grades .action-bar { grid-column:3 / 5; }
+        .ui-modern #file-info-att-proc { grid-column:1 / -1; }
+        .ui-modern .split-file-tab { padding:.2rem .4rem .2rem .6rem; font-size:.75rem; }
+
+        .ui-modern .tool-panel > * { min-width:0; }
+        .ui-modern #roster-checklist .roster-item { flex-direction:row; flex-wrap:wrap; gap:.35rem; }
+        .ui-modern, .ui-modern body { height:100%; }
+        .ui-modern body { position:fixed; top:0; left:0; right:0; bottom:auto; height:var(--app-h, 100%); overflow:hidden; }
+        .ui-modern .container { padding-bottom:calc(1.6rem + env(safe-area-inset-bottom, 0px)); }
+        .ui-modern .tool-panel { overflow-y:auto; overflow-x:hidden; }
+        .ui-modern .output-grid-2col, .ui-modern .output-grid-3col, .ui-modern .output-grid-splitter { min-height:150px; }
+        .ui-modern, .ui-modern body { height:auto; min-height:0; }
+        .ui-modern body { position:static; display:block; overflow-x:hidden; overflow-y:auto; padding:.5rem; }
+        .ui-modern .container { height:calc(var(--app-h, 100vh) - 1rem); min-height:420px; padding-bottom:.9rem; border-radius:.9rem; }
+        @media (max-width:1150px) {
+            .ui-modern .container { grid-template-columns:minmax(0,1fr) auto; grid-template-rows:auto auto minmax(0,1fr); }
+            .ui-modern h1 { grid-column:1; grid-row:1; white-space:normal; }
+            .ui-modern .header-meta { grid-column:2; grid-row:1; }
+            .ui-modern .tabs { grid-column:1 / -1; grid-row:2; }
+            .ui-modern .tool-panel { grid-row:3; }
+            .ui-modern .tool-panel.active { gap:.5rem; }
+            .ui-modern .btn-action, .ui-modern label.btn-action { padding:.35rem .55rem; }
+        }
+
+        @media (max-width:899px) {
+            .ui-modern body { position:static; height:auto; overflow:auto; }
+            .ui-modern .tool-panel { overflow:visible; }
+            .ui-modern .container { display:flex; flex-direction:column; align-items:stretch; height:auto; }
+            .ui-modern .header-meta { flex-wrap:wrap; }
+            .ui-modern .tool-panel.active { display:flex; flex-direction:column; }
+            .ui-modern .controls { display:grid; grid-template-columns:1fr 1fr; gap:.5rem; }
+            .ui-modern .output-grid-2col, .ui-modern .output-grid-3col, .ui-modern .output-grid-splitter { display:flex; flex-direction:column; height:auto; }
+            .ui-modern textarea, .ui-modern .roster-container, .ui-modern .roster-list { flex:none; height:220px; }
+            .ui-modern .action-bar { flex-wrap:wrap; }
+        }
+</style>
 </head>
 <body>
 
@@ -527,14 +674,17 @@
     </div>
 
     <div class="header-meta">
-        <div id="device-badge" class="device-badge">Detecting device...</div>
-        <button class="update-check-btn" onclick="checkForUpdates(true)">🔄 Check for Updates</button>
+        <div id="device-badge" class="device-badge hide-modern">Detecting device...</div>
+        <button class="update-check-btn" onclick="checkForUpdates(true)" title="Check for updates">🔄<span class="hide-modern"> Check for Updates</span></button>
+        <button class="update-check-btn danger-hover" id="clear-data-btn" onclick="clearCurrentTabData()" title="Clear the uploaded data on this tab">🗑 Clear data</button>
+        <button class="update-check-btn" id="theme-btn" onclick="toggleTheme()" title="Switch theme">🌙</button>
+        <div class="seg" role="group" aria-label="Interface style"><button id="ui-modern-btn" onclick="setUI('modern')" title="New compact interface">Modern</button><button id="ui-classic-btn" onclick="setUI('classic')" title="Original interface">Classic</button></div>
     </div>
 
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('grades')">Excel Class Data Extractor</button>
-        <button class="tab-btn" onclick="switchTab('attendance')">Attendance & Exam Processor</button>
-        <button class="tab-btn" onclick="switchTab('splitter')">LMS Drag & Drop Splitter</button>
+        <button class="tab-btn active" onclick="switchTab('grades')"><span class="t-long">Excel Class Data Extractor</span><span class="t-short">Grades</span></button>
+        <button class="tab-btn" onclick="switchTab('attendance')"><span class="t-long">Attendance & Exam Processor</span><span class="t-short">Attendance &amp; Exams</span></button>
+        <button class="tab-btn" onclick="switchTab('splitter')"><span class="t-long">LMS Drag & Drop Splitter</span><span class="t-short">LMS Splitter</span></button>
     </div>
 
     <!-- MODULE 1: EXCEL GRADES & ATTENDANCE EXTRACTOR -->
@@ -655,7 +805,7 @@
         <div class="output-grid-3col">
             <div class="output-section">
                 <div class="output-header">
-                    <label><strong style="color: #4f46e5;">Student Roster & Exam Status</strong></label>
+                    <label><strong style="color: var(--primary);">Student Roster & Exam Status</strong></label>
                 </div>
                 <div class="roster-container" id="roster-sidebar">
                     <i style="color: #94a3b8; font-size: 0.85rem;">Upload files to view student names and statuses...</i>
@@ -664,7 +814,7 @@
 
             <div class="output-section">
                 <div class="output-header">
-                    <label><strong style="color: #4f46e5;">Attendance Matrix (P/A/L Only)</strong></label>
+                    <label><strong style="color: var(--primary);">Attendance Matrix (P/A/L Only)</strong></label>
                     <button class="btn-action" onclick="copyText('output-attendance-matrix', this)">Copy Matrix</button>
                 </div>
                 <textarea id="output-attendance-matrix" readonly placeholder="Raw P, A, L attendance matrix..."></textarea>
@@ -672,7 +822,7 @@
 
             <div class="output-section">
                 <div class="output-header">
-                    <label><strong style="color: #16a34a;">Aligned Exam Scores</strong></label>
+                    <label><strong style="color: var(--ok);">Aligned Exam Scores</strong></label>
                     <button class="btn-action btn-success" onclick="copyText('output-exam-scores', this)">Copy Exam Scores</button>
                 </div>
                 <textarea id="output-exam-scores" readonly placeholder="Aligned exam scores..."></textarea>
@@ -700,7 +850,7 @@
             </div>
         </div>
 
-        <div style="margin-bottom: 0.5rem;">
+        <div class="tl-label" style="margin-bottom: 0.5rem;">
             <label><strong>Columns Timeline (Drag cards, toggle omit/include, combine columns, or drag the 🟥 SPLIT DIVIDER):</strong></label>
         </div>
         <div class="timeline-container">
@@ -721,7 +871,7 @@
 
             <div class="output-box">
                 <div class="output-header">
-                    <label><strong style="color: #4f46e5;">Group A Scores Only</strong></label>
+                    <label><strong style="color: var(--primary);">Group A Scores Only</strong></label>
                     <button class="btn-action" onclick="copyText('output-a', this)">Copy Group A Scores</button>
                 </div>
                 <textarea id="output-a" readonly placeholder="Group A scores will appear here..."></textarea>
@@ -729,7 +879,7 @@
 
             <div class="output-box">
                 <div class="output-header">
-                    <label><strong style="color: #16a34a;">Group B Scores Only</strong></label>
+                    <label><strong style="color: var(--ok);">Group B Scores Only</strong></label>
                     <button class="btn-action btn-success" onclick="copyText('output-b', this)">Copy Group B Scores</button>
                 </div>
                 <textarea id="output-b" readonly placeholder="Group B scores will appear here..."></textarea>
@@ -737,6 +887,17 @@
         </div>
     </div>
 </div>
+
+<dialog id="review-dialog">
+    <div class="dlg-in">
+        <div class="dlg-head"><h3>Exams not matched to a student</h3><button class="btn-action" onclick="document.getElementById('review-dialog').close()">Close</button></div>
+        <p class="dlg-sub" id="review-sub"></p>
+        <div id="review-list"></div>
+        <div class="dlg-foot"><span class="calc-hint">Matching ignores leading zeros, dashes and letter case.</span>
+            <span style="display:flex; gap:.5rem;"><button class="btn-action btn-success" onclick="acceptCloseMatches()">Accept all close matches</button>
+            <button class="btn-action" onclick="document.getElementById('review-dialog').close()">Done</button></span></div>
+    </div>
+</dialog>
 
 <script>
     // --- GITHUB UPDATE CHECKER ---
@@ -790,7 +951,9 @@
         deviceBadge.style.color = "#166534";
     }
 
+    let currentTab = 'grades';
     function switchTab(tabName) {
+        currentTab = tabName;
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.tool-panel').forEach(panel => panel.classList.remove('active'));
         
@@ -1334,17 +1497,14 @@
         if (e.target.files.length) handleExamFile(e.target.files[0]);
     });
 
-    function cleanId(id) {
-        if (!id) return "";
-        return String(id).trim().replace(/^0+/, '');
-    }
-
     function handleAttendanceFile(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
             rawAttendanceLines = e.target.result.split(/\r?\n/);
             parseAndPopulateColumns();
+            manualAssignments.clear();
             processPipeline();
+            maybeAutoReview();
         };
         reader.readAsText(file);
     }
@@ -1399,155 +1559,310 @@
         }
     }
 
+    function guessName(row) {
+        for (const v of row) {
+            if (typeof v !== 'string') continue;
+            const s = v.trim();
+            if (!s || s.length > 60 || s.includes('@')) continue;
+            if (/^[^\d,]+,\s*[^\d,]+$/.test(s) && /[A-Za-z]{2}/.test(s)) return s;
+            if (/^[A-Z][a-z]+(\s+[A-Z][A-Za-z.\-]*)+$/.test(s)) return s;
+        }
+        return '';
+    }
+
+    // Finds the student number in an exam row. Strict pass: 7-15 digits. Lenient pass catches typo'd IDs
+    // (dashes, a letter O for a zero, truncated numbers) so they show up for review instead of vanishing.
+    function extractExamId(row) {
+        for (const v of row) {
+            if (v == null) continue;
+            const s = String(v).trim();
+            if (/^\d{7,15}$/.test(s)) return { id: s, odd: false };
+        }
+        const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s) || /^\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4}$/.test(s);
+        for (const v of row) {
+            if (v == null) continue;
+            const s = String(v).trim();
+            if (s.length < 5 || s.length > 24 || isDate(s) || /^\d+\.\d+$/.test(s)) continue;
+            if (!/^[0-9A-Za-z][0-9A-Za-z \-_.]*[0-9A-Za-z]$/.test(s)) continue;
+            const core = s.replace(/[\s\-_.]/g, '');
+            const digits = (core.match(/\d/g) || []).length;
+            if (digits >= 5 && digits / core.length >= 0.6) return { id: s, odd: true };
+        }
+        return null;
+    }
+
     function parseExamWorkbook(arrayBuffer) {
         try {
             const data = new Uint8Array(arrayBuffer);
             const workbook = XLSX.read(data, { type: 'array' });
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
             const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
-            
+
             examReportRecords = [];
+            manualAssignments.clear();
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
                 if (!row || row.length < 2) continue;
-                
-                let studentId = "";
-                let score = 0;
-
-                for (let c = 0; c < row.length; c++) {
-                    let val = row[c];
-                    if (val !== undefined && val !== null) {
-                        let sVal = String(val).trim();
-                        if (/^\d{7,15}$/.test(sVal) && !studentId) {
-                            studentId = sVal;
-                        }
-                    }
-                }
-
                 let possibleScore = row[7];
-                if (possibleScore === undefined || possibleScore === null || isNaN(possibleScore)) {
-                    possibleScore = row[row.length - 1];
-                }
-
-                if (possibleScore !== undefined && possibleScore !== null && !isNaN(possibleScore)) {
-                    score = Number(possibleScore);
-                }
-
-                if (studentId) {
-                    examReportRecords.push({ studentId, cleanId: cleanId(studentId), score });
+                if (possibleScore === undefined || possibleScore === null || isNaN(possibleScore)) possibleScore = row[row.length - 1];
+                const hasScore = possibleScore !== undefined && possibleScore !== null && String(possibleScore).trim() !== '' && !isNaN(possibleScore);
+                const score = hasScore ? Number(possibleScore) : 0;
+                const found = extractExamId(row);
+                const name = guessName(row);
+                if (found) {
+                    examReportRecords.push({ studentId: found.id, normId: normId(found.id), cleanId: cleanId(found.id), score, name, odd: found.odd, rowNo: i + 1 });
+                } else if (name && hasScore) {
+                    // a scored row with a name but no recognisable ID: keep it so it can be assigned by hand
+                    examReportRecords.push({ studentId: '', normId: '', cleanId: '', score, name, odd: false, rowNo: i + 1 });
                 }
             }
             processPipeline();
+            maybeAutoReview();
         } catch (err) {
             fileInfoAttProc.textContent = `Error parsing exam report: ${err.message}`;
         }
     }
 
-    function processPipeline() {
-        if (rawAttendanceLines.length === 0) {
-            fileInfoAttProc.textContent = "Please upload an attendance file.";
-            return;
-        }
+    // --- MODULE 2: ATTENDANCE & EXAM PROCESSOR (matching rewritten) ---
+    let manualAssignments = new Map(); // exam record index -> attendance student key
+    let lastState = null;              // { students, match, rows } from the latest processPipeline()
 
+    function normId(id) { return id == null ? '' : String(id).toUpperCase().replace(/[^0-9A-Z]/g, ''); }
+    function cleanId(id) { return normId(id).replace(/^0+/, ''); }
+
+    // Damerau-Levenshtein (adjacent swaps count as 1 edit)
+    function idDistance(a, b) {
+        const n = a.length, m = b.length;
+        if (!n || !m) return Math.max(n, m);
+        const d = [];
+        for (let i = 0; i <= n; i++) d[i] = [i];
+        for (let j = 1; j <= m; j++) d[0][j] = j;
+        for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++) {
+            const c = a[i - 1] === b[j - 1] ? 0 : 1;
+            d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + c);
+            if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+        }
+        return d[n][m];
+    }
+
+    // Aligns two IDs and wraps the differing characters in <mark>.
+    function diffIds(a, b) {
+        const n = a.length, m = b.length, d = [];
+        for (let i = 0; i <= n; i++) d[i] = [i];
+        for (let j = 1; j <= m; j++) d[0][j] = j;
+        for (let i = 1; i <= n; i++) for (let j = 1; j <= m; j++)
+            d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        const ma = new Array(n).fill(false), mb = new Array(m).fill(false);
+        let i = n, j = m;
+        while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && d[i][j] === d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)) {
+                if (a[i - 1] !== b[j - 1]) { ma[i - 1] = true; mb[j - 1] = true; }
+                i--; j--;
+            } else if (i > 0 && d[i][j] === d[i - 1][j] + 1) { ma[i - 1] = true; i--; }
+            else { mb[j - 1] = true; j--; }
+        }
+        const render = (s, mk) => [...s].map((ch, k) => mk[k] ? '<mark>' + escHtml(ch) + '</mark>' : escHtml(ch)).join('');
+        return { a: render(a, ma), b: render(b, mb) };
+    }
+
+    function nameTokens(n) { return String(n || '').toLowerCase().match(/[a-zñ]{2,}/g) || []; }
+    function nameOverlap(a, b) {
+        const A = nameTokens(a), B = new Set(nameTokens(b));
+        if (!A.length || !B.size) return 0;
+        return A.filter(t => B.has(t)).length / A.length;
+    }
+
+    function parseAttendanceStudents() {
         const omitQuery = omitInputAtt.value.trim().toLowerCase();
         const removeCount = parseInt(columnSelect.value, 10) || 0;
-        let attendanceStudents = [];
-
+        const list = [];
         for (let i = 0; i < rawAttendanceLines.length; i++) {
             const line = rawAttendanceLines[i].trim();
             if (!line || line.toLowerCase().includes("computer programming")) continue;
             const parts = line.split(',');
             if (parts.length < 3) continue;
-            
-            const lastName = parts[0].trim();
-            const firstName = parts[1].trim();
+            const lastName = parts[0].trim(), firstName = parts[1].trim();
             if (lastName === "Last name" || !lastName) continue;
-
             const fullName = lastName + ", " + firstName;
-            if (omitQuery && fullName.toLowerCase().includes(omitQuery)) continue;
-
-            let studentId = parts[2] ? parts[2].trim() : "";
-            
-            let palCodes = [];
+            const studentId = parts[2] ? parts[2].trim() : "";
+            const palCodes = [];
             for (let j = 4; j < parts.length; j += 5) {
-                if (j >= parts.length) break;
-                let rawStatus = parts[j] ? parts[j].trim() : "";
+                const rawStatus = parts[j] ? parts[j].trim() : "";
                 let code = "A";
                 if (["OnTime", "Early", "P"].includes(rawStatus)) code = "P";
                 else if (["Late", "L"].includes(rawStatus)) code = "L";
                 palCodes.push(code);
             }
-
-            let filteredCodes = palCodes.slice(removeCount);
-
-            attendanceStudents.push({
-                name: fullName,
-                studentId: studentId,
-                cleanId: cleanId(studentId),
-                matrix: filteredCodes
+            list.push({
+                name: fullName, studentId, cleanId: cleanId(studentId), normId: normId(studentId),
+                key: studentId + '|' + fullName, matrix: palCodes.slice(removeCount),
+                omitted: !!(omitQuery && fullName.toLowerCase().includes(omitQuery))
             });
         }
+        return list;
+    }
 
-        let examIdSet = new Set(examReportRecords.map(e => e.cleanId));
-
-        let rosterHtml = '';
-        attendanceStudents.forEach((stu, idx) => {
-            let isFound = examIdSet.has(stu.cleanId);
-            let statusBadge = isFound 
-                ? `<span class="found-badge">✔ Found in Exam</span>` 
-                : `<span class="missing-badge">⚠️ Not Found in Exam</span>`;
-
-            rosterHtml += `<div class="roster-item">
-                <strong>${idx + 1}. ${stu.name}</strong>
-                <span>${statusBadge}</span>
-            </div>`;
+    // Step 1: exact matches (leading zeros / dashes / case ignored). Step 2: matches the user picked by hand.
+    // Anything left is an "unassigned exam" that the user reviews instead of being silently paired or dropped.
+    function computeMatches(students) {
+        const used = new Set(), assigned = new Map(), byClean = new Map();
+        examReportRecords.forEach((e, i) => {
+            if (!e.cleanId) return;
+            if (!byClean.has(e.cleanId)) byClean.set(e.cleanId, []);
+            byClean.get(e.cleanId).push(i);
         });
-        rosterSidebar.innerHTML = rosterHtml || '<i style="color:#94a3b8;">No records found.</i>';
+        students.forEach((s, si) => {
+            const list = s.cleanId ? byClean.get(s.cleanId) : null;
+            const ei = list ? list.find(i => !used.has(i)) : undefined;
+            if (ei !== undefined) { used.add(ei); assigned.set(si, { exam: ei, how: 'exact' }); }
+        });
+        const keyToIdx = new Map(students.map((s, i) => [s.key, i]));
+        manualAssignments.forEach((key, ei) => {
+            const si = keyToIdx.get(key);
+            if (si === undefined || used.has(ei) || assigned.has(si)) return;
+            used.add(ei); assigned.set(si, { exam: ei, how: 'manual' });
+        });
+        return { assigned };
+    }
 
-        let matrixRows = attendanceStudents.map(stu => stu.matrix.join('\t'));
-        outputAttendanceMatrix.value = matrixRows.length ? matrixRows.join('\n') : "No attendance records found.";
-
-        if (examReportRecords.length > 0) {
-            let sortedAtt = [...attendanceStudents].map((s, origIdx) => ({ ...s, origIdx }));
-            sortedAtt.sort((a, b) => a.cleanId.localeCompare(b.cleanId));
-
-            let sortedExam = [...examReportRecords].map(e => ({ ...e }));
-            sortedExam.sort((a, b) => a.cleanId.localeCompare(b.cleanId));
-
-            let alignedExamScoresByAttOrder = new Array(attendanceStudents.length).fill(0);
-            
-            let attIdx = 0, examIdx = 0;
-            while (attIdx < sortedAtt.length && examIdx < sortedExam.length) {
-                let attStu = sortedAtt[attIdx];
-                let examStu = sortedExam[examIdx];
-
-                if (attStu.cleanId && examStu.cleanId && attStu.cleanId === examStu.cleanId) {
-                    alignedExamScoresByAttOrder[attStu.origIdx] = examStu.score;
-                    attIdx++;
-                    examIdx++;
-                } else if (!attStu.cleanId || !examStu.cleanId) {
-                    alignedExamScoresByAttOrder[attStu.origIdx] = examStu.score;
-                    attIdx++;
-                    examIdx++;
-                } else if (attStu.cleanId < examStu.cleanId) {
-                    alignedExamScoresByAttOrder[attStu.origIdx] = 0;
-                    attIdx++;
-                } else {
-                    examIdx++;
-                }
-            }
-
-            let filteredScores = [];
-            attendanceStudents.forEach((stu, idx) => {
-                filteredScores.push(alignedExamScoresByAttOrder[idx]);
+    function buildReviewRows(students, match) {
+        const exactExams = new Set(), exactStudents = new Set(), manualByExam = new Map(), takenBy = new Map();
+        match.assigned.forEach((v, si) => {
+            if (v.how === 'exact') { exactExams.add(v.exam); exactStudents.add(si); }
+            else { manualByExam.set(v.exam, si); takenBy.set(si, v.exam); }
+        });
+        const rows = [];
+        examReportRecords.forEach((ex, ei) => {
+            if (exactExams.has(ei)) return;
+            const cur = manualByExam.has(ei) ? manualByExam.get(ei) : -1;
+            const cands = [];
+            students.forEach((s, si) => {
+                if (exactStudents.has(si) || (s.omitted && si !== cur)) return;
+                if (takenBy.has(si) && takenBy.get(si) !== ei) return;
+                const dist = (ex.normId && s.normId) ? idDistance(ex.normId, s.normId) : 99;
+                const nm = nameOverlap(ex.name, s.name);
+                cands.push({ si, dist, nm, rank: dist - 2 * nm, close: dist <= 3 || nm >= 0.6 });
             });
+            cands.sort((a, b) => a.rank - b.rank || a.dist - b.dist);
+            rows.push({ ei, ex, cur, cands });
+        });
+        return rows;
+    }
 
-            outputExamScores.value = filteredScores.join('\n');
-            fileInfoAttProc.textContent = `Processed successfully! Attendance roster (${attendanceStudents.length} students) and Exam scores aligned.`;
-        } else {
-            fileInfoAttProc.textContent = `Attendance loaded (${attendanceStudents.length} students). Upload exam report to process alignment.`;
+    function setAttInfo(text, unassigned) {
+        fileInfoAttProc.textContent = text;
+        if (unassigned > 0) {
+            const b = document.createElement('button');
+            b.className = 'link-btn';
+            b.textContent = `⚠ ${unassigned} exam${unassigned > 1 ? 's' : ''} not assigned — review`;
+            b.onclick = openReview;
+            fileInfoAttProc.append(' ', b);
         }
     }
+
+    function processPipeline() {
+        if (rawAttendanceLines.length === 0) { setAttInfo("Please upload an attendance file.", 0); return; }
+        const students = parseAttendanceStudents();
+        const match = computeMatches(students);
+        const hasExam = examReportRecords.length > 0;
+        const rows = hasExam ? buildReviewRows(students, match) : [];
+        lastState = { students, match, rows };
+        const shown = [];
+        students.forEach((s, si) => { if (!s.omitted) shown.push(si); });
+
+        rosterSidebar.innerHTML = shown.map((si, idx) => {
+            const s = students[si], m = match.assigned.get(si);
+            let badge = '';
+            if (hasExam) {
+                if (m && m.how === 'exact') badge = '<span class="found-badge">✔ Found in Exam</span>';
+                else if (m) badge = `<span class="found-badge">✋ Assigned manually (exam ID ${escHtml(examReportRecords[m.exam].normId || 'none')})</span>`;
+                else badge = '<span class="missing-badge">⚠️ Not Found in Exam</span>';
+            }
+            return `<div class="roster-item"><strong>${idx + 1}. ${escHtml(s.name)}</strong><span>${badge}</span></div>`;
+        }).join('') || '<i style="color:#94a3b8;">No records found.</i>';
+
+        const matrixRows = shown.map(si => students[si].matrix.join('\t'));
+        outputAttendanceMatrix.value = matrixRows.length ? matrixRows.join('\n') : "No attendance records found.";
+
+        if (hasExam) {
+            outputExamScores.value = shown.map(si => { const m = match.assigned.get(si); return m ? examReportRecords[m.exam].score : 0; }).join('\n');
+            const matched = shown.filter(si => match.assigned.has(si)).length;
+            const manual = shown.filter(si => (match.assigned.get(si) || {}).how === 'manual').length;
+            const unassigned = rows.filter(r => r.cur < 0).length;
+            setAttInfo(`${shown.length} students · ${matched} matched${manual ? ` (${manual} manually)` : ''} · ${shown.length - matched} without an exam (scored 0).`, unassigned);
+        } else {
+            outputExamScores.value = '';
+            setAttInfo(`Attendance loaded (${shown.length} students). Upload exam report to process alignment.`, 0);
+        }
+        if (reviewDialog.open) renderReviewDialog();
+    }
+
+    function maybeAutoReview() {
+        if (lastState && examReportRecords.length && lastState.rows.some(r => r.cur < 0)) openReview();
+    }
+
+    // --- Review dialog: compare IDs and pick who an unassigned exam belongs to ---
+    const reviewDialog = document.getElementById('review-dialog');
+    function openReview() { renderReviewDialog(); if (!reviewDialog.open) reviewDialog.showModal(); }
+
+    function renderReviewDialog() {
+        const list = document.getElementById('review-list');
+        if (!lastState || !lastState.rows.length) {
+            document.getElementById('review-sub').textContent = '';
+            list.innerHTML = '<p class="rv-empty">✔ Every exam matched a student number exactly.</p>';
+            return;
+        }
+        const { students, rows } = lastState;
+        const pending = rows.filter(r => r.cur < 0).length;
+        document.getElementById('review-sub').textContent =
+            `${pending} of ${rows.length} exam record(s) have no student number match. Differing characters are highlighted — pick the right student for each, or leave it unassigned.`;
+        list.innerHTML = rows.map(r => {
+            const ex = r.ex, top = r.cands[0];
+            const target = r.cur >= 0 ? r.cur : (top && top.close ? top.si : -1);
+            const t = target >= 0 ? students[target] : null;
+            const df = t && ex.normId ? diffIds(ex.normId, t.normId) : null;
+            const examId = df ? df.a : escHtml(ex.normId || '(no ID found)');
+            const opts = '<option value="-1">— Not assigned —</option>' + r.cands.map(c => {
+                const s = students[c.si];
+                return `<option value="${c.si}"${c.si === r.cur ? ' selected' : ''}>${escHtml(s.name)} · ${escHtml(s.studentId || 'no ID')}${c.dist < 99 ? ` (${c.dist} off)` : ''}</option>`;
+            }).join('');
+            const use = (r.cur < 0 && top && top.close)
+                ? `<button class="btn-action rv-use" data-ei="${r.ei}" data-si="${top.si}">Use closest: ${escHtml(students[top.si].name)} (${top.dist} off)</button>` : '';
+            return `<div class="rv-row${r.cur >= 0 ? ' done' : ''}">
+                <div><div class="rv-cap">Exam row ${ex.rowNo}${ex.name ? ' · ' + escHtml(ex.name) : ''} · score ${ex.score}${ex.odd ? ' · unusual ID format' : ''}</div>
+                <div class="rv-ids"><span class="rv-k">Exam</span><code>${examId}</code>
+                <span class="rv-k">${r.cur >= 0 ? 'Student' : 'Closest'}</span><code>${t ? (df ? df.b : escHtml(t.normId)) : '—'}</code></div></div>
+                <div class="rv-right"><select data-ei="${r.ei}">${opts}</select>${use}</div></div>`;
+        }).join('');
+    }
+
+    function setManual(ei, si) {
+        if (si < 0) manualAssignments.delete(ei);
+        else manualAssignments.set(ei, lastState.students[si].key);
+        processPipeline();
+    }
+    reviewDialog.addEventListener('change', e => {
+        const sel = e.target.closest('select[data-ei]');
+        if (sel) setManual(+sel.dataset.ei, +sel.value);
+    });
+    reviewDialog.addEventListener('click', e => {
+        const b = e.target.closest('[data-use]') || e.target.closest('.rv-use');
+        if (b) setManual(+b.dataset.ei, +b.dataset.si);
+        if (e.target === reviewDialog) reviewDialog.close(); // click on backdrop
+    });
+    window.acceptCloseMatches = function () {
+        if (!lastState) return;
+        const taken = new Set([...manualAssignments.values()]);
+        const picks = lastState.rows.filter(r => r.cur < 0 && r.cands[0] && (r.cands[0].dist <= 2 || r.cands[0].nm >= 0.6))
+            .sort((a, b) => a.cands[0].dist - b.cands[0].dist);
+        picks.forEach(r => {
+            const c = r.cands.find(c => (c.dist <= 2 || c.nm >= 0.6) && !taken.has(lastState.students[c.si].key));
+            if (!c) return;
+            const key = lastState.students[c.si].key;
+            taken.add(key); manualAssignments.set(r.ei, key);
+        });
+        processPipeline();
+    };
 
     // --- MODULE 3: LMS SPLITTER SCRIPT ---
     let rawSheetDataSplit = [];
@@ -2024,6 +2339,89 @@
         document.getElementById('output-b').value = outputBRows.length ? outputBRows.join('\n') : "No columns or records in Group B.";
     }
 
+
+
+    // --- THEME, UI MODE & CLEAR DATA ---
+    function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+    function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    function syncToolbar() {
+        const d = document.documentElement, dark = d.dataset.theme === 'dark', modern = d.classList.contains('ui-modern');
+        const tb = document.getElementById('theme-btn');
+        tb.textContent = dark ? '☀️' : '🌙';
+        tb.title = dark ? 'Switch to light theme' : 'Switch to dark theme';
+        document.getElementById('ui-modern-btn').classList.toggle('on', modern);
+        document.getElementById('ui-classic-btn').classList.toggle('on', !modern);
+    }
+    window.toggleTheme = function () {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = next;
+        lsSet('ucdt_theme', next);
+        syncToolbar();
+    };
+    window.setUI = function (mode) {
+        const d = document.documentElement;
+        d.classList.toggle('ui-modern', mode === 'modern');
+        d.classList.toggle('ui-classic', mode === 'classic');
+        lsSet('ucdt_ui', mode);
+        syncToolbar();
+    };
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if (lsGet('ucdt_theme')) return; // an explicit choice always wins
+            document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';
+            syncToolbar();
+        });
+    }
+    syncToolbar();
+
+    function clearGradesData() {
+        loadedProcessedData = [];
+        finalsShuffleKeys = {};
+        fileInputGrades.value = '';
+        document.getElementById('import-session-input').value = '';
+        exportSessionBtn.disabled = true;
+        classSelect.innerHTML = '<option value="ALL">All Loaded Classes (Combined)</option>';
+        classSelect.value = 'ALL';
+        syncPeriodOptions();
+        outputGrades.value = '';
+        document.getElementById('finals-output').value = '';
+        progressContainer.style.display = 'none';
+        fileInfoGrades.textContent = 'Ready for file selection.';
+    }
+    function clearAttendanceData() {
+        rawAttendanceLines = []; examReportRecords = []; maxDetectedColumns = 0;
+        manualAssignments.clear(); lastState = null;
+        fileInputAtt.value = ''; fileInputExam.value = '';
+        columnSelect.innerHTML = '<option value="0" selected>Show All (Remove 0 from left)</option>';
+        rosterSidebar.innerHTML = '<i style="color:#94a3b8; font-size: 0.85rem;">Upload files to view student names and statuses...</i>';
+        outputAttendanceMatrix.value = ''; outputExamScores.value = '';
+        if (reviewDialog.open) reviewDialog.close();
+        fileInfoAttProc.textContent = 'Ready for attendance and exam file uploads.';
+    }
+    function clearSplitterData() {
+        while (splitFiles.length) removeSplitFile(0);
+        fileInputSplit.value = '';
+    }
+    window.clearCurrentTabData = function () {
+        const labels = { grades: 'Excel Class Data Extractor', attendance: 'Attendance & Exam Processor', splitter: 'LMS Drag & Drop Splitter' };
+        if (!confirm(`Clear all uploaded data in "${labels[currentTab]}"? This cannot be undone.`)) return;
+        if (currentTab === 'grades') clearGradesData();
+        else if (currentTab === 'attendance') clearAttendanceData();
+        else clearSplitterData();
+    };
+
+    // Size the Modern layout to the part of the screen that is really visible (mobile browsers
+    // report a taller "viewport" than what is shown once toolbars / nav bars are counted).
+    function fitViewport() {
+        const vv = window.visualViewport;
+        const h = Math.floor(Math.min((vv && vv.height) || Infinity, window.innerHeight));
+        document.documentElement.style.setProperty('--app-h', h + 'px');
+    }
+    fitViewport();
+    window.addEventListener('resize', fitViewport);
+    window.addEventListener('orientationchange', () => setTimeout(fitViewport, 200));
+    window.addEventListener('load', fitViewport);
+    if (window.visualViewport) { visualViewport.addEventListener('resize', fitViewport); visualViewport.addEventListener('scroll', fitViewport); }
 
     // --- BULLETPROOF COPY FUNCTION ---
     window.copyText = function(elementId, btn) {
