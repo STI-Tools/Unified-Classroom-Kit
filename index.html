@@ -823,6 +823,31 @@
             .ui-modern textarea, .ui-modern .roster-container, .ui-modern .roster-list { flex:none; height:220px; }
             .ui-modern .action-bar { flex-wrap:wrap; }
         }
+
+        /* --- PRIVATE VAULT AUTO-SYNC (Module 1) --- */
+        #vault-open-btn .vdot { display:inline-block; width:.55rem; height:.55rem; border-radius:50%; background:#94a3b8; margin-left:.3rem; vertical-align:middle; }
+        #vault-open-btn.vault-on .vdot { background:#22c55e; }
+        #vault-open-btn.vault-err .vdot { background:#ef4444; }
+        #vault-open-btn.vault-busy .vdot { background:#f59e0b; animation:vpulse 1s infinite; }
+        @keyframes vpulse { 50% { opacity:.3; } }
+        dialog.vault-dialog { border:1px solid var(--border); border-radius:.8rem; background:var(--card-bg); color:var(--text); padding:0; width:min(600px,94vw); max-height:92vh; overflow:auto; text-align:left; box-shadow:0 20px 50px rgb(0 0 0/.35); }
+        dialog.vault-dialog::backdrop { background:rgb(0 0 0/.55); }
+        .vault-head { display:flex; justify-content:space-between; align-items:center; padding:.7rem 1rem; border-bottom:1px solid var(--border); }
+        .vault-head h3 { margin:0; font-size:1rem; }
+        .vault-body { padding:.8rem 1rem 1rem; display:grid; grid-template-columns:1fr 1fr; gap:.6rem .8rem; }
+        .vault-body .vf { display:flex; flex-direction:column; gap:.2rem; min-width:0; }
+        .vault-body .vf.full { grid-column:1 / -1; }
+        .vault-body label { font-size:.75rem; font-weight:600; color:var(--muted); }
+        .vault-body input[type="text"], .vault-body input[type="password"] { padding:.45rem .55rem; border:1px solid var(--border); border-radius:.5rem; font-size:.88rem; background:var(--input-bg); color:var(--text); width:100%; box-sizing:border-box; outline:none; }
+        .vault-body .vchk { display:flex; align-items:center; gap:.45rem; font-size:.82rem; color:var(--text-2); font-weight:500; }
+        .vault-body .vchk input { width:auto; }
+        .vault-btns { display:flex; flex-wrap:wrap; gap:.4rem; }
+        .vault-btns .btn-action { padding:.4rem .8rem; font-size:.82rem; }
+        .vault-note { font-size:.72rem; color:var(--muted); margin:0; }
+        .vault-state { font-size:.8rem; color:var(--text-2); }
+        #vault-log { max-height:170px; overflow:auto; border:1px solid var(--border); border-radius:.5rem; background:var(--surface); padding:.4rem .55rem; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.72rem; line-height:1.45; }
+        #vault-log .ok { color:var(--ok); } #vault-log .bad { color:var(--bad); } #vault-log .mute { color:var(--muted); }
+        @media (max-width:560px) { .vault-body { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
@@ -901,6 +926,7 @@
         <div class="action-bar">
             <div class="file-info" id="file-info-grades">Ready for file selection.</div>
             <div class="session-actions">
+                <button class="btn-action" id="vault-open-btn" onclick="openVaultDialog()" title="Private vault auto-sync">☁️ Vault<span class="vdot"></span></button>
                 <button class="btn-action btn-success" id="export-session-btn" onclick="exportSessionData()" disabled>💾 Export Session</button>
                 <label class="btn-action" style="cursor: pointer; display: inline-block; margin: 0;">
                     📂 Import Session <input type="file" id="import-session-input" accept=".json" style="display: none;" onchange="importSessionData(event)">
@@ -1085,6 +1111,34 @@
     </div>
 </dialog>
 
+<!-- PRIVATE VAULT SETTINGS (opened from Module 1 "Vault" button) -->
+<dialog id="vault-dialog" class="vault-dialog">
+    <div class="vault-head">
+        <h3>☁️ Private Classroom Data Vault</h3>
+        <button type="button" class="btn-action" style="padding:.3rem .7rem;font-size:.8rem;" onclick="closeVaultDialog()">Close</button>
+    </div>
+    <div class="vault-body">
+        <div class="vf"><label for="vault-owner">Private repo owner</label><input type="text" id="vault-owner" placeholder="STI-Tools" autocomplete="off" spellcheck="false"></div>
+        <div class="vf"><label for="vault-repo">Private repo name</label><input type="text" id="vault-repo" placeholder="Classroom-Data-Vault" autocomplete="off" spellcheck="false"></div>
+        <div class="vf"><label for="vault-branch">Branch</label><input type="text" id="vault-branch" placeholder="main" autocomplete="off" spellcheck="false"></div>
+        <div class="vf"><label for="vault-pat">Fine-grained PAT (Contents: Read and write)</label><input type="password" id="vault-pat" placeholder="github_pat_..." autocomplete="off" spellcheck="false"></div>
+        <div class="vf full">
+            <label class="vchk"><input type="checkbox" id="vault-persist"> Remember token on this device (localStorage). Off = cleared when the tab closes (sessionStorage).</label>
+            <label class="vchk"><input type="checkbox" id="vault-auto" checked> Auto-sync after every Excel upload</label>
+            <label class="vchk"><input type="checkbox" id="vault-force"> Force overwrite (also replace newer vault records with an older source file)</label>
+        </div>
+        <div class="vf full vault-btns">
+            <button type="button" class="btn-action btn-success" onclick="vaultSaveSettings()">Save</button>
+            <button type="button" class="btn-action" onclick="vaultClearToken()">Clear Token</button>
+            <button type="button" class="btn-action" onclick="vaultTestConnection()">Test Connection</button>
+            <button type="button" class="btn-action" id="vault-sync-now" onclick="vaultSyncNow()">Sync Now</button>
+        </div>
+        <div class="vf full"><div class="vault-state" id="vault-state">Not configured.</div></div>
+        <div class="vf full"><label>Sync log</label><div id="vault-log"><span class="mute">No sync activity yet.</span></div></div>
+        <div class="vf full"><p class="vault-note">Records are uploaded to <code>records/&lt;class&gt;__&lt;COLLEGE|SHS&gt;.json</code>. Uploads are skipped when nothing changed or when the Excel file is older than the vault copy. The vault repo must be <b>private</b>; syncing is refused if GitHub reports it as public. Local extraction always works even if sync fails.</p></div>
+    </div>
+</dialog>
+
 <script>
     // --- GITHUB UPDATE CHECKER ---
     async function checkForUpdates(isManual = false) {
@@ -1164,7 +1218,7 @@
         const isSHS = allNames.includes('Data Input') && allNames.includes('Term 1') &&
                       allNames.includes('Term 2') && allNames.includes('Term 3');
         const wanted = isSHS
-            ? ['Data Input', 'Term 1', 'Term 2', 'Term 3', 'Attendance']
+            ? ['Data Input', 'Term 1', 'Term 2', 'Term 3', 'Attendance', 'Grading Summary']
             : ['Input', 'PRELIMS', 'MIDTERM', 'PRE-FINALS', 'FINALS'];
         wanted.push('Settings');
         if (!isSHS) allNames.forEach(n => { if (/summary/i.test(n) && !wanted.includes(n)) wanted.push(n); });
@@ -1227,8 +1281,27 @@
                 ? XLSX.utils.sheet_to_json(ws, { header: 1, range: rng, blankrows: true, defval: '' })
                 : XLSX.utils.sheet_to_json(ws, { header: 1, range: rng, blankrows: false });
         });
+        // Vault extras: class info (labels from Settings / Data Input) and a student count from the summary sheet.
+        const meta = {};
+        if (isSHS) {
+            const ir = XLSX.utils.sheet_to_json(workbook.Sheets['Data Input'], { header: 1, defval: '', range: { s: { r: 0, c: 0 }, e: { r: 60, c: 30 } } });
+            ir.forEach(function (r) { const k = String(r[3] == null ? '' : r[3]).trim(), v = r[6]; if (k && v !== '' && v != null && !/^class information$/i.test(k)) meta[k] = String(v).trim(); });
+        } else if (settingsRows) {
+            settingsRows.slice(0, 10).forEach(function (r) { [[3, 4], [14, 15]].forEach(function (p) { const k = String(r[p[0]] == null ? '' : r[p[0]]).trim(), v = r[p[1]]; if (k && v !== '' && v != null && k.length < 30) meta[k] = String(v).trim(); }); });
+        }
+        let studentCount = 0;
+        {
+            const sumName = isSHS ? 'Grading Summary' : allNames.find(function (n) { return /summary/i.test(n) && sheetsData[n]; });
+            const sr = sumName && sheetsData[sumName];
+            if (sr) {
+                let hr = -1, hc = -1;
+                for (let i = 0; i < sr.length && hr < 0; i++) { const row = sr[i] || []; for (let c = 0; c < row.length; c++) { if (/^student\s*no/i.test(String(row[c] == null ? '' : row[c]).trim())) { hr = i; hc = c; break; } } }
+                if (hr >= 0) for (let i = hr + 1; i < sr.length; i++) { const v = sr[i] && sr[i][hc]; if (v != null && /\d{4,}/.test(String(v))) studentCount++; }
+            }
+        }
         return { name: fileObj.name, sheetNames: allNames, sheetsData: sheetsData,
-                 classKey: detectedSubject + ' ' + detectedSection, format: isSHS ? 'SHS' : 'COLLEGE' };
+                 classKey: detectedSubject + ' ' + detectedSection, format: isSHS ? 'SHS' : 'COLLEGE',
+                 meta: meta, studentCount: studentCount, sourceLastModified: (typeof fileObj.lastModified === 'number') ? fileObj.lastModified : null };
     }
 
     // Parser wrapper: tries a Web Worker first; if the sandbox blocks it (e.g. SecurityError on blob workers), parses on the main thread.
@@ -1290,7 +1363,7 @@
         let filePayloads = [];
         for (let i = 0; i < files.length; i++) {
             const buffer = await files[i].arrayBuffer();
-            filePayloads.push({ name: files[i].name, buffer: buffer });
+            filePayloads.push({ name: files[i].name, buffer: buffer, lastModified: files[i].lastModified });
         }
         parser.postMessage(filePayloads);
     });
@@ -1299,6 +1372,7 @@
         const msg = e.data;
         if (msg.type === 'file_complete') {
             loadedProcessedData.push(msg.result);
+            vaultBatch.push(msg.result);
             progressBar.style.width = msg.percent + '%';
             progressBar.textContent = msg.percent + '%';
             fileInfoGrades.textContent = `Parsed ${msg.current} of ${msg.total} file(s).`;
@@ -1309,8 +1383,350 @@
             setTimeout(() => { progressContainer.style.display = 'none'; }, 400);
             fileInfoGrades.textContent = `All ${loadedProcessedData.length} file(s) successfully parsed.`;
             fileInputGrades.value = '';
+            vaultOnBatchComplete(); // async + wrapped: never blocks or breaks local extraction
         }
     };
+
+
+    // =====================================================================
+    // PRIVATE VAULT AUTO-SYNC (Module 1 -> private GitHub repo, Contents API)
+    // Never blocks local extraction: every call below is wrapped and async.
+    // =====================================================================
+    // Set this ONCE (admin) to your Cloudflare Worker URL. Teachers then need no token or settings at all.
+    const _VE = 'https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev';
+    const VAULT_ENDPOINT = _VE.indexOf('YOUR-') < 0 ? _VE : '';
+    // Teachers never see the Vault button. Admin opens the toolkit with ?admin at the end of the URL.
+    const VAULT_ADMIN = /[?&]admin(=|&|$)/.test(location.search);
+    const VAULT_CFG_KEY = 'ucdt_vault_cfg';
+    const VAULT_PAT_KEY = 'ucdt_vault_pat';
+    let vaultBatch = [];                 // records parsed in the current upload batch
+    let vaultChain = Promise.resolve();  // sequential queue: pushes never overlap (no 409 races)
+    let vaultRunning = false;
+    const vaultPrivateChecked = {};      // "owner/repo" -> true once confirmed private this page session
+
+    function vStoreGet(store, k) { try { return store.getItem(k); } catch (e) { return null; } }
+    function vStoreSet(store, k, v) { try { store.setItem(k, v); } catch (e) {} }
+    function vStoreDel(store, k) { try { store.removeItem(k); } catch (e) {} }
+
+    function vaultGetConfig() {
+        let c = {};
+        try { c = JSON.parse(vStoreGet(localStorage, VAULT_CFG_KEY) || '{}') || {}; } catch (e) {}
+        const pat = vStoreGet(sessionStorage, VAULT_PAT_KEY) || vStoreGet(localStorage, VAULT_PAT_KEY) || '';
+        if (VAULT_ENDPOINT && !VAULT_ADMIN) { c.autosync = true; c.force = false; } // teachers: always auto-sync, never force
+        return {
+            owner: (c.owner || '').trim(), repo: (c.repo || '').trim(), branch: (c.branch || 'main').trim() || 'main',
+            autosync: c.autosync !== false, force: !!c.force, persist: !!c.persist, pat: pat.trim()
+        };
+    }
+    function vaultReadForm() {
+        const g = id => document.getElementById(id);
+        const prev = vaultGetConfig();
+        const typed = g('vault-pat').value.trim();
+        return {
+            owner: g('vault-owner').value.trim(), repo: g('vault-repo').value.trim(),
+            branch: g('vault-branch').value.trim() || 'main',
+            autosync: g('vault-auto').checked, force: g('vault-force').checked, persist: g('vault-persist').checked,
+            pat: typed || prev.pat
+        };
+    }
+    function vaultPersist(cfg) {
+        vStoreSet(localStorage, VAULT_CFG_KEY, JSON.stringify({
+            owner: cfg.owner, repo: cfg.repo, branch: cfg.branch, autosync: cfg.autosync, force: cfg.force, persist: cfg.persist
+        })); // the token itself is NEVER part of this object
+        if (cfg.pat) {
+            if (cfg.persist) { vStoreSet(localStorage, VAULT_PAT_KEY, cfg.pat); vStoreDel(sessionStorage, VAULT_PAT_KEY); }
+            else { vStoreSet(sessionStorage, VAULT_PAT_KEY, cfg.pat); vStoreDel(localStorage, VAULT_PAT_KEY); }
+        }
+    }
+    function vaultConfigured(cfg) { return VAULT_ENDPOINT ? true : !!(cfg.owner && cfg.repo && cfg.pat); }
+
+    function vaultRefreshUi() {
+        const cfg = vaultGetConfig();
+        const btn = document.getElementById('vault-open-btn');
+        const st = document.getElementById('vault-state');
+        if (btn) {
+            btn.classList.toggle('vault-on', vaultConfigured(cfg) && cfg.autosync);
+            btn.title = vaultConfigured(cfg) ? ('Vault: ' + cfg.owner + '/' + cfg.repo + (cfg.autosync ? ' (auto-sync on)' : ' (auto-sync off)')) : 'Private vault not configured';
+        }
+        if (st) {
+            if (VAULT_ENDPOINT) st.textContent = 'Connected to the school vault. Auto-sync ' + (cfg.autosync ? 'ON' : 'OFF') + '. Nothing to set up.';
+            else if (vaultConfigured(cfg)) st.textContent = 'Ready: ' + cfg.owner + '/' + cfg.repo + ' @ ' + cfg.branch + ' · token ' + (cfg.pat.slice(0, 11) + '…' + cfg.pat.slice(-4)) + ' (' + (vStoreGet(localStorage, VAULT_PAT_KEY) ? 'localStorage' : 'session only') + ') · auto-sync ' + (cfg.autosync ? 'ON' : 'OFF');
+            else st.textContent = 'Not configured: ' + [!cfg.owner && 'owner', !cfg.repo && 'repo', !cfg.pat && 'Missing PAT'].filter(Boolean).join(', ') + '.';
+        }
+    }
+    function vaultInit() {
+        const cfg = vaultGetConfig(), g = id => document.getElementById(id);
+        const ob = g('vault-open-btn'); if (ob && VAULT_ENDPOINT && !VAULT_ADMIN) ob.style.display = 'none';
+        g('vault-owner').value = cfg.owner; g('vault-repo').value = cfg.repo; g('vault-branch').value = cfg.branch;
+        g('vault-auto').checked = cfg.autosync; g('vault-force').checked = cfg.force; g('vault-persist').checked = cfg.persist;
+        if (VAULT_ENDPOINT) ['vault-owner', 'vault-repo', 'vault-branch', 'vault-pat', 'vault-persist'].forEach(id => { const e = g(id); const box = e && (e.closest('.vf') || e.parentNode); if (box && id !== 'vault-persist') box.style.display = 'none'; else if (e && e.parentNode) e.parentNode.style.display = 'none'; });
+        vaultRefreshUi();
+    }
+    window.openVaultDialog = function () { vaultInit(); const d = document.getElementById('vault-dialog'); if (d.showModal) d.showModal(); else d.setAttribute('open', ''); };
+    window.closeVaultDialog = function () { const d = document.getElementById('vault-dialog'); if (d.close) d.close(); else d.removeAttribute('open'); };
+    window.vaultSaveSettings = function () {
+        const cfg = vaultReadForm();
+        vaultPersist(cfg);
+        document.getElementById('vault-pat').value = '';
+        if (cfg.pat && !/^(github_pat_|ghp_)/.test(cfg.pat)) vaultLog('warn', 'Token does not start with github_pat_ — double-check it.');
+        vaultRefreshUi();
+        vaultLog('info', 'Settings saved.');
+    };
+    window.vaultClearToken = function () {
+        vStoreDel(sessionStorage, VAULT_PAT_KEY); vStoreDel(localStorage, VAULT_PAT_KEY);
+        document.getElementById('vault-pat').value = '';
+        vaultRefreshUi(); vaultLog('info', 'Token cleared from this browser.');
+    };
+
+    function vaultLog(kind, text) {
+        const box = document.getElementById('vault-log'); if (!box) return;
+        if (box.querySelector('.mute') && box.children.length === 1 && /No sync activity/.test(box.textContent)) box.innerHTML = '';
+        const cls = kind === 'ok' ? 'ok' : (kind === 'err' ? 'bad' : (kind === 'warn' ? 'bad' : 'mute'));
+        const row = document.createElement('div');
+        row.className = cls;
+        row.textContent = '[' + new Date().toLocaleTimeString() + '] ' + text;
+        box.insertBefore(row, box.firstChild);
+        while (box.children.length > 200) box.removeChild(box.lastChild);
+    }
+
+    // ---- encoding / hashing helpers ----
+    function b64EncodeUtf8(str) {
+        const bytes = new TextEncoder().encode(str);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        return btoa(bin);
+    }
+    function b64DecodeUtf8(b64) {
+        const bin = atob(String(b64).replace(/\s/g, ''));
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        return new TextDecoder('utf-8').decode(bytes);
+    }
+    function stableStringify(v) {
+        if (v === null || typeof v !== 'object') return JSON.stringify(v === undefined ? null : v);
+        if (Array.isArray(v)) { let s = '['; for (let i = 0; i < v.length; i++) s += (i ? ',' : '') + stableStringify(v[i]); return s + ']'; }
+        const keys = Object.keys(v).sort(); let s = '{';
+        keys.forEach((k, i) => { s += (i ? ',' : '') + JSON.stringify(k) + ':' + stableStringify(v[k]); });
+        return s + '}';
+    }
+    async function vaultHash(text) {
+        try {
+            if (window.crypto && crypto.subtle) {
+                const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+                return 'sha256:' + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+        } catch (e) {}
+        let h1 = 0xdeadbeef, h2 = 0x41c6ce57; // fallback (cyrb53) when SubtleCrypto is unavailable (e.g. file://)
+        for (let i = 0; i < text.length; i++) { const ch = text.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+        h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+        h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+        return 'cyrb53:' + (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+    }
+    function vaultSlug(s) {
+        return String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90) || 'unknown';
+    }
+    function vaultPathFor(item) {
+        let src = item.classKey || '';
+        if (/unknown/i.test(src)) src += ' ' + String(item.name || '').replace(/\.[^.]+$/, ''); // avoid collisions when detection failed
+        return 'records/' + vaultSlug(src) + '__' + (item.format === 'SHS' ? 'SHS' : 'COLLEGE') + '.json';
+    }
+    async function vaultBuildPayload(item) {
+        const base = {
+            schemaVersion: 1, classKey: item.classKey, format: item.format === 'SHS' ? 'SHS' : 'COLLEGE',
+            sheetNames: item.sheetNames || [], meta: item.meta || {}, sheetsData: item.sheetsData || {}
+        };
+        const contentHash = await vaultHash(stableStringify(base));
+        return {
+            schemaVersion: 1, classKey: base.classKey, format: base.format, fileName: item.name,
+            sheetNames: base.sheetNames, meta: base.meta, studentCount: item.studentCount || 0,
+            sheetsData: base.sheetsData,
+            sourceLastModified: (typeof item.sourceLastModified === 'number') ? item.sourceLastModified : null,
+            contentHash: contentHash, updatedAt: new Date().toISOString()
+        };
+    }
+
+    // ---- GitHub REST helpers ----
+    function ghEnc(s) { return encodeURIComponent(s); }
+    function ghEncPath(p) { return p.split('/').map(ghEnc).join('/'); }
+    function ghRepoBase(cfg) { return '/repos/' + ghEnc(cfg.owner) + '/' + ghEnc(cfg.repo); }
+    async function ghFetch(cfg, method, path, body, accept) {
+        const headers = { 'Accept': accept || 'application/vnd.github+json', 'Authorization': 'Bearer ' + cfg.pat };
+        if (body) headers['Content-Type'] = 'application/json';
+        return fetch('https://api.github.com' + path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined });
+    }
+    async function ghError(res, action) {
+        let msg = ''; try { msg = (await res.json()).message || ''; } catch (e) {}
+        const e = new Error(''); e.status = res.status;
+        const remaining = res.headers.get('x-ratelimit-remaining'), retry = res.headers.get('retry-after'), reset = res.headers.get('x-ratelimit-reset');
+        if (res.status === 401) e.message = '401 Unauthorized — token is wrong, expired or revoked.';
+        else if (res.status === 403 || res.status === 429) {
+            if (remaining === '0' || retry || /rate limit/i.test(msg)) {
+                e.rateLimited = true;
+                e.message = res.status + ' Rate limited' + (retry ? ' — retry in ' + retry + 's' : (reset ? ' — resets ' + new Date(reset * 1000).toLocaleTimeString() : '')) + '.';
+            } else e.message = '403 Forbidden — token needs "Contents: Read and write" on this repo (' + (msg || action) + ').';
+        }
+        else if (res.status === 404) e.message = '404 Not found — check owner/repo/branch, and that the token is scoped to this private repo.';
+        else if (res.status === 409) { e.conflict = true; e.message = '409 Conflict — file changed during upload.'; }
+        else if (res.status === 422) { e.conflict = /sha/i.test(msg); e.message = '422 ' + (msg || 'Unprocessable') + '.'; }
+        else e.message = res.status + ' ' + (msg || 'GitHub error') + '.';
+        return e;
+    }
+    async function vaultEnsurePrivate(cfg) {
+        const key = cfg.owner + '/' + cfg.repo + '#' + cfg.pat.slice(-6);
+        if (vaultPrivateChecked[key]) return;
+        const res = await ghFetch(cfg, 'GET', ghRepoBase(cfg) + '?_=' + Date.now());
+        if (!res.ok) throw await ghError(res, 'repo check');
+        const info = await res.json();
+        if (info.private !== true) throw new Error('Refusing to sync: ' + cfg.owner + '/' + cfg.repo + ' is NOT private. Student data must only go to a private repo.');
+        vaultPrivateChecked[key] = true;
+    }
+    async function vaultGetFile(cfg, path) {
+        const url = ghRepoBase(cfg) + '/contents/' + ghEncPath(path) + '?ref=' + ghEnc(cfg.branch) + '&_=' + Date.now();
+        const res = await ghFetch(cfg, 'GET', url);
+        if (res.status === 404) return { exists: false };
+        if (!res.ok) throw await ghError(res, 'read');
+        const info = await res.json();
+        if (Array.isArray(info)) throw new Error('Vault path ' + path + ' is a folder.');
+        let text = null;
+        if (info.encoding === 'base64' && info.content) text = b64DecodeUtf8(info.content);
+        else { // files > 1 MB come back without inline content: fetch the raw body instead
+            const r2 = await ghFetch(cfg, 'GET', url, null, 'application/vnd.github.raw+json');
+            if (r2.ok) text = await r2.text();
+        }
+        let json = null; try { json = JSON.parse(text); } catch (e) {}
+        return { exists: true, sha: info.sha, json: json };
+    }
+    async function vaultPutFile(cfg, path, text, sha, message) {
+        const body = { message: message, content: b64EncodeUtf8(text), branch: cfg.branch };
+        if (sha) body.sha = sha;
+        const res = await ghFetch(cfg, 'PUT', ghRepoBase(cfg) + '/contents/' + ghEncPath(path), body);
+        if (!res.ok) throw await ghError(res, 'write');
+        return res.json();
+    }
+
+    // ---- one record ----
+    async function vaultSyncItem(item, cfg) {
+        const path = vaultPathFor(item);
+        const out = { classKey: item.classKey, name: item.name, path: path, status: 'error', detail: '' };
+        try {
+            const incoming = await vaultBuildPayload(item);
+            if (VAULT_ENDPOINT) { // proxy mode: the Worker holds the token and applies the same unchanged / older / update rules
+                const res = await fetch(VAULT_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ path: path, force: cfg.force, payload: incoming }) });
+                let j = {}; try { j = await res.json(); } catch (e) {}
+                out.status = j.status || 'error'; out.detail = j.detail || (res.ok ? '' : 'HTTP ' + res.status);
+                return out;
+            }
+            for (let attempt = 0; attempt < 3; attempt++) {
+                const cur = await vaultGetFile(cfg, path);
+                if (cur.exists && cur.json) {
+                    if (cur.json.contentHash && cur.json.contentHash === incoming.contentHash) { out.status = 'unchanged'; return out; }
+                    const a = cur.json.sourceLastModified, b = incoming.sourceLastModified;
+                    if (!cfg.force && typeof a === 'number' && typeof b === 'number' && b < a) {
+                        out.status = 'skipped_older';
+                        out.detail = 'source ' + new Date(b).toLocaleString() + ' < vault ' + new Date(a).toLocaleString();
+                        return out;
+                    }
+                }
+                try {
+                    await vaultPutFile(cfg, path, JSON.stringify(incoming), cur.exists ? cur.sha : null, 'Sync ' + incoming.classKey + ' [' + incoming.format + ']');
+                    out.status = cur.exists ? 'updated' : 'created';
+                    return out;
+                } catch (e) {
+                    if (e.conflict && attempt < 2) { await new Promise(r => setTimeout(r, 600)); continue; } // re-read the latest sha and retry
+                    throw e;
+                }
+            }
+        } catch (e) { out.status = 'error'; out.detail = (e && e.message) || String(e); out.rateLimited = !!(e && e.rateLimited); }
+        return out;
+    }
+
+    // ---- queue ----
+    function vaultSummary(results) {
+        const n = s => results.filter(r => r.status === s).length;
+        const synced = n('created') + n('updated'), unch = n('unchanged'), old = n('skipped_older'), errs = results.filter(r => r.status === 'error');
+        const parts = [];
+        if (synced) parts.push(synced + ' synced');
+        if (unch) parts.push(unch + ' unchanged (skipped)');
+        if (old) parts.push(old + ' skipped (older source)');
+        if (errs.length) parts.push(errs.length + ' error' + (errs.length > 1 ? 's' : '') + ': ' + errs[0].detail.slice(0, 140));
+        return '☁️ Vault: ' + (parts.join(' · ') || 'nothing to sync');
+    }
+    async function vaultRun(items, trigger) {
+        const btn = document.getElementById('vault-open-btn');
+        const cfg = vaultGetConfig();
+        if (!items.length) return;
+        if (!vaultConfigured(cfg)) {
+            if (cfg.owner || cfg.repo || trigger === 'manual') {
+                const why = !cfg.pat ? 'Missing PAT' : 'Vault owner/repo not set';
+                fileInfoGrades.textContent += ' · ☁️ Vault: ' + why + ' (open ☁️ Vault to configure).';
+                vaultLog('warn', why + ' — nothing was uploaded. Local data is unaffected.');
+            }
+            return;
+        }
+        vaultRunning = true;
+        if (btn) { btn.classList.remove('vault-err'); btn.classList.add('vault-busy'); }
+        const sn = document.getElementById('vault-sync-now'); if (sn) sn.disabled = true;
+        const base = fileInfoGrades.textContent.replace(/ · ☁️ Vault:.*$/, '');
+        const results = [];
+        try {
+            if (!VAULT_ENDPOINT) await vaultEnsurePrivate(cfg);
+            for (let i = 0; i < items.length; i++) {
+                fileInfoGrades.textContent = base + ' · ☁️ Vault sync ' + (i + 1) + '/' + items.length + '…';
+                const r = await vaultSyncItem(items[i], cfg);
+                results.push(r);
+                const label = { created: 'Synced (new)', updated: 'Synced (updated)', unchanged: 'Unchanged (skipped)', skipped_older: 'Skipped older', error: 'Error' }[r.status];
+                vaultLog(r.status === 'error' ? 'err' : (r.status === 'created' || r.status === 'updated' ? 'ok' : 'info'), label + ' — ' + r.classKey + ' → ' + r.path + (r.detail ? ' (' + r.detail + ')' : ''));
+                if (r.rateLimited) break;
+                if (r.status === 'created' || r.status === 'updated') await new Promise(res => setTimeout(res, 500)); // be gentle with GitHub write limits
+            }
+        } catch (e) {
+            const d = (e && e.message) || String(e);
+            results.push({ status: 'error', detail: d, classKey: '', path: '' });
+            vaultLog('err', d);
+        }
+        vaultRunning = false;
+        const bad = results.some(r => r.status === 'error');
+        if (btn) { btn.classList.remove('vault-busy'); btn.classList.toggle('vault-err', bad); }
+        if (sn) sn.disabled = false;
+        fileInfoGrades.textContent = base + ' · ' + vaultSummary(results);
+    }
+    function vaultEnqueue(items, trigger) {
+        vaultChain = vaultChain.then(() => vaultRun(items, trigger)).catch(e => { console.warn('Vault queue error:', e); });
+        return vaultChain;
+    }
+    function vaultOnBatchComplete() {
+        const items = vaultBatch.splice(0);
+        try {
+            const cfg = vaultGetConfig();
+            if (!items.length || !cfg.autosync) return;
+            vaultEnqueue(items, 'auto');
+        } catch (e) { console.warn('Vault auto-sync skipped:', e); }
+    }
+    window.vaultSyncNow = function () {
+        try {
+            vaultPersist(vaultReadForm());
+            document.getElementById('vault-pat').value = '';
+            vaultRefreshUi();
+            if (!loadedProcessedData.length) { vaultLog('warn', 'Nothing to sync — load class records first.'); return; }
+            vaultEnqueue(loadedProcessedData.slice(), 'manual');
+        } catch (e) { vaultLog('err', (e && e.message) || String(e)); }
+    };
+    window.vaultTestConnection = async function () {
+        const cfg = vaultReadForm();
+        if (VAULT_ENDPOINT) { try { const r = await fetch(VAULT_ENDPOINT); vaultLog(r.ok ? 'ok' : 'err', r.ok ? 'School vault endpoint reachable.' : 'Endpoint returned HTTP ' + r.status); } catch (e) { vaultLog('err', 'Cannot reach the vault endpoint.'); } return; }
+        if (!cfg.pat) { vaultLog('warn', 'Missing PAT.'); return; }
+        if (!cfg.owner || !cfg.repo) { vaultLog('warn', 'Enter the repo owner and name.'); return; }
+        try {
+            vaultLog('info', 'Testing ' + cfg.owner + '/' + cfg.repo + ' …');
+            delete vaultPrivateChecked[cfg.owner + '/' + cfg.repo + '#' + cfg.pat.slice(-6)];
+            await vaultEnsurePrivate(cfg);
+            const res = await ghFetch(cfg, 'GET', ghRepoBase(cfg) + '/contents/?ref=' + ghEnc(cfg.branch) + '&_=' + Date.now());
+            if (!res.ok) throw await ghError(res, 'branch check');
+            vaultLog('ok', 'Connected: repo is private and branch "' + cfg.branch + '" is readable. (Write access is confirmed on the first sync.)');
+        } catch (e) { vaultLog('err', (e && e.message) || String(e)); }
+    };
+    vaultInit();
 
     classSelect.addEventListener('change', () => {
         syncPeriodOptions();
