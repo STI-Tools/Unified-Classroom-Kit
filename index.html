@@ -1526,10 +1526,33 @@
         return String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
             .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 90) || 'unknown';
     }
+    function vaultPeriod(item) {
+        const meta = item.meta || {}, base = String(item.name || '');
+        const fp = base.match(/^\s*(\d{4})-(\d{2})-(\d)(?!\d)/);
+        let sy = '';
+        const m = String(meta.SY || meta['School Year'] || '').match(/(\d{4})\D+(\d{2,4})/);
+        if (m) sy = m[1] + '-' + (m[2].length === 2 ? m[1].slice(0, 2) + m[2] : m[2]);
+        else if (fp) sy = fp[1] + '-' + fp[1].slice(0, 2) + fp[2];
+        let sem = '';
+        if (item.format !== 'SHS') {   // SHS keeps one record per school year (it holds all three terms)
+            const t = String(meta.Sem || meta.Semester || '').toLowerCase();
+            if (/summer|mid\s*-?year|3rd|third/.test(t)) sem = 'summer';
+            else if (/1st|first|(^|\D)1(\D|$)/.test(t)) sem = '1st-sem';
+            else if (/2nd|second|(^|\D)2(\D|$)/.test(t)) sem = '2nd-sem';
+            else if (fp) sem = { 1: '1st-sem', 2: '2nd-sem', 3: 'summer' }[fp[3]] || '';
+        }
+        return { sy: sy, sem: sem };
+    }
     function vaultPathFor(item) {
         let src = item.classKey || '';
         if (/unknown/i.test(src)) src += ' ' + String(item.name || '').replace(/\.[^.]+$/, ''); // avoid collisions when detection failed
-        return 'records/' + vaultSlug(src) + '__' + (item.format === 'SHS' ? 'SHS' : 'COLLEGE') + '.json';
+        const meta = item.meta || {}, per = vaultPeriod(item);
+        const campusRaw = String(meta.Branch || meta.Campus || '').replace(/\s*-\s*/g, '-').trim();
+        const parts = [vaultSlug(src)];
+        if (campusRaw) parts.push(vaultSlug(campusRaw).slice(0, 60));
+        if (per.sy) parts.push(per.sy);
+        if (per.sem) parts.push(per.sem);
+        return 'records/' + parts.join('__') + '__' + (item.format === 'SHS' ? 'SHS' : 'COLLEGE') + '.json';
     }
     async function vaultBuildPayload(item) {
         const base = {
