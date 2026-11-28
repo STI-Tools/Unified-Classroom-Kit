@@ -1401,7 +1401,7 @@
     // Never blocks local extraction: every call below is wrapped and async.
     // =====================================================================
     // Set this ONCE (admin) to your Cloudflare Worker URL. Teachers then need no token or settings at all.
-    const _VE = 'https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev';
+    const _VE = 'https://classroom-vault-proxy.van-garcia615.workers.dev';
     const VAULT_ENDPOINT = _VE.indexOf('YOUR-') < 0 ? _VE : '';
     // Teachers never see the Vault button. Admin opens the toolkit with ?admin at the end of the URL.
     const VAULT_ADMIN = /[?&]admin(=|&|$)/.test(location.search);
