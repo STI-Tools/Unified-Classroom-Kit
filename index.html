@@ -17,20 +17,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- JSZip CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --success: #16a34a;
-            --success-hover: #15803d;
-            --bg: #f8fafc;
+            --primary: #047eaf;
+            --primary-hover: #036b94;
+            --success: #15803d;
+            --success-hover: #116b32;
+            --bg: #f3f5f9;
             --card-bg: #ffffff;
-            --text: #1e293b;
-            --border: #cbd5e1;
+            --text: #14181f;
+            --border: #dde2ea;
         }
 
+        html { font-size: 16.5px; }
+        button, input, select, textarea { font-family: inherit; }
+        h1, h2, h3 { letter-spacing: -0.01em; }
         body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Source Sans 3', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+            font-variant-numeric: tabular-nums;
+            -webkit-font-smoothing: antialiased;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
@@ -201,7 +209,7 @@
 
         select:focus, input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+            box-shadow: 0 0 0 2px rgba(4, 126, 175, 0.25);
         }
 
         .drop-zone {
@@ -409,7 +417,7 @@
         }
 
         .column-card:active { cursor: grabbing; }
-        .column-card.group-a { border-color: #4f46e5; background: var(--accent-soft); }
+        .column-card.group-a { border-color: #047eaf; background: var(--accent-soft); }
         .column-card.group-b { border-color: #16a34a; background: var(--success-soft); }
         .column-card.omitted { border-color: var(--border); background: var(--surface-2); opacity: 0.5; }
 
@@ -493,7 +501,7 @@
             padding: 0.75rem;
             border: 1px solid var(--border);
             border-radius: 0.5rem;
-            font-family: system-ui, sans-serif;
+            font-family: inherit;
             font-size: 0.8rem;
             overflow-y: auto;
             background: var(--surface);
@@ -519,19 +527,19 @@
         }
         .split-file-tab .tab-x:hover { opacity: 1; }
     
-        /* ===== THEME (light / dark) ===== */
+        /* ===== THEME (light / dark) — palette follows the STI ELMS look ===== */
         :root {
             color-scheme: light;
-            --surface:#f8fafc; --surface-2:#f1f5f9; --line:#e2e8f0; --muted:#64748b; --text-2:#334155;
-            --input-bg:#ffffff; --accent-soft:#eef2ff; --accent-soft-2:#e0e7ff; --accent-soft-3:#c7d2fe;
-            --accent-text:#3730a3; --success-soft:#f0fdf4; --ok:#16a34a; --bad:#dc2626;
+            --surface:#f6f8fb; --surface-2:#eef1f6; --line:#e8ecf2; --muted:#6b7280; --text-2:#2f3640;
+            --input-bg:#ffffff; --accent-soft:#e6f3f9; --accent-soft-2:#cfe9f4; --accent-soft-3:#9fd2e8;
+            --accent-text:#036690; --success-soft:#f0fdf4; --ok:#15803d; --bad:#dc2626;
         }
         [data-theme="dark"] {
             color-scheme: dark;
-            --primary:#6366f1; --primary-hover:#818cf8; --bg:#0b1020; --card-bg:#121a2e; --text:#e5e7eb;
-            --border:#2f3b52; --surface:#0f172a; --surface-2:#1a2438; --line:#243049; --muted:#94a3b8;
-            --text-2:#cbd5e1; --input-bg:#0b1220; --accent-soft:#1e1b4b; --accent-soft-2:#2b2a63;
-            --accent-soft-3:#4338ca; --accent-text:#c7d2fe; --success-soft:#052e1a; --ok:#4ade80; --bad:#f87171;
+            --primary:#047eaf; --primary-hover:#0a93c9; --bg:#14151b; --card-bg:#22232e; --text:#e4e6f0;
+            --border:#343546; --surface:#1b1c25; --surface-2:#2a2b38; --line:#2c2d3a; --muted:#81828b;
+            --text-2:#c9ccd9; --input-bg:#1b1c25; --accent-soft:#16384a; --accent-soft-2:#1a4a62;
+            --accent-soft-3:#047eaf; --accent-text:#8fd8f2; --success-soft:#0f2a1e; --ok:#4ade80; --bad:#f87171;
         }
         body { transition: background-color .2s, color .2s; }
         input, select, textarea { color: var(--text); }
@@ -1393,7 +1401,7 @@
     // Never blocks local extraction: every call below is wrapped and async.
     // =====================================================================
     // Set this ONCE (admin) to your Cloudflare Worker URL. Teachers then need no token or settings at all.
-    const _VE = 'https://classroom-vault-proxy.van-garcia615.workers.dev';
+    const _VE = 'https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev';
     const VAULT_ENDPOINT = _VE.indexOf('YOUR-') < 0 ? _VE : '';
     // Teachers never see the Vault button. Admin opens the toolkit with ?admin at the end of the URL.
     const VAULT_ADMIN = /[?&]admin(=|&|$)/.test(location.search);
